@@ -1,0 +1,2993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pediatric Nursing Board Exam Simulator (SCFHS)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#1e3a8a', 900: '#0f172a' },
+                        teal: { 600: '#0d9488', 700: '#0f766e' },
+                        emerald: { 600: '#059669', 700: '#047857' },
+                        gold: { 500: '#eab308', 600: '#ca8a04' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-teal-600 selection:text-white">
+
+    <!-- Header -->
+    <header class="bg-navy-900 border-b border-slate-800 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-teal-600 flex items-center justify-center font-bold text-white text-xl shadow-lg">PN</div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white">Pediatric Nursing Exam Simulator (SCFHS)</h1>
+                    <p class="text-xs text-slate-400">Core Competencies & Clinical Safety Suite (Pediatric Master Bank)</p>
+                </div>
+            </div>
+            <div id="header-stats" class="hidden flex items-center gap-6 text-sm bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700">
+                <div>Timer: <span id="timer-display" class="font-mono font-bold text-gold-500">00:00:00</span></div>
+                <div>Progress: <span id="progress-display" class="font-bold text-teal-400">0/0</span></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-5xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+
+        <!-- SETUP VIEW -->
+        <div id="view-setup" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 sm:p-8 shadow-xl max-w-2xl mx-auto w-full">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-white mb-2">Configure Pediatric Exam Module</h2>
+                <p class="text-slate-400 text-sm">Pediatric Nursing Master Bank Loaded. Select your exam size below or paste custom JSON.</p>
+            </div>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Question Bank JSON Data (Optional Override)</label>
+                    <textarea id="json-input" rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-teal-600" placeholder="Leave empty to use built-in master dataset..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Number of Questions</label>
+                        <select id="select-count" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-teal-600">
+                            <option value="5">5 Questions (Quick Test)</option>
+                            <option value="20" selected>20 Questions (Standard Module)</option>
+                            <option value="50">50 Questions (Quarter Mock)</option>
+                            <option value="all">All Available Questions</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Time Limit Mode</label>
+                        <select id="select-timelimit" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-teal-600">
+                            <option value="timed" selected>Timed Exam (Proportional)</option>
+                            <option value="untimed">Untimed Practice</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="startExam()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3.5 px-6 rounded-xl transition shadow-lg text-base">
+                    Start Examination
+                </button>
+            </div>
+        </div>
+
+        <!-- QUIZ VIEW -->
+        <div id="view-quiz" class="hidden space-y-6">
+            <!-- Top Nav & Palette Toggle -->
+            <div class="flex justify-between items-center bg-slate-800 border border-slate-700 px-4 py-3 rounded-xl">
+                <div id="question-domain" class="text-xs uppercase tracking-wider bg-teal-900/60 text-teal-300 border border-teal-700 px-3 py-1 rounded-full font-semibold">
+                    Category: Pediatric Nursing
+                </div>
+                <button onclick="togglePalette()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition font-medium">
+                    Toggle Question Matrix
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+                <!-- Question Card -->
+                <div class="lg:col-span-3 bg-slate-800 border border-slate-700 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+                    <div class="flex justify-between items-center text-sm text-slate-400 border-b border-slate-700 pb-3">
+                        <span id="question-number-label" class="font-bold text-white">Question 1 of 20</span>
+                        <span id="question-id-badge" class="font-mono text-xs bg-slate-700 px-2 py-1 rounded">Item #1</span>
+                    </div>
+
+                    <div id="question-text" class="text-lg text-slate-100 font-medium leading-relaxed">
+                        <!-- Question text inserted dynamically -->
+                    </div>
+
+                    <div id="options-container" class="space-y-3">
+                        <!-- Options inserted dynamically -->
+                    </div>
+
+                    <!-- Rationale Box -->
+                    <div id="rational-box" class="hidden bg-slate-900 border border-teal-700/60 rounded-xl p-4 text-sm text-slate-300 space-y-2 mt-4">
+                        <div class="font-bold text-teal-400 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Clinical Rationale
+                        </div>
+                        <p id="rational-text" class="text-slate-300 leading-relaxed"></p>
+                    </div>
+
+                    <!-- Controls Footer -->
+                    <div class="flex justify-between items-center pt-6 border-t border-slate-700">
+                        <button id="btn-prev" onclick="prevQuestion()" class="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            Previous
+                        </button>
+                        <div class="flex gap-3">
+                            <button id="btn-flag" onclick="toggleFlag()" class="bg-slate-700 hover:bg-slate-600 text-gold-500 border border-slate-600 px-4 py-2.5 rounded-xl text-sm font-semibold transition">
+                                Flag for Review
+                            </button>
+                            <button id="btn-next" onclick="nextQuestion()" class="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition">
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Matrix / Navigation Sidebar -->
+                <div id="palette-sidebar" class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-white">Question Navigator</h3>
+                        <span class="text-xs text-slate-400">Click to jump</span>
+                    </div>
+                    <div id="palette-grid" class="grid grid-cols-5 gap-2 max-h-[350px] overflow-y-auto pr-1">
+                        <!-- Palette buttons generated dynamically -->
+                    </div>
+                    <div class="pt-4 border-t border-slate-700 text-xs space-y-2 text-slate-400">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-teal-600 inline-block"></span> Answered</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-gold-500 inline-block"></span> Flagged</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-slate-700 inline-block"></span> Unanswered</div>
+                    </div>
+                    <button onclick="confirmSubmitExam()" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-md">
+                        Finish & Submit Exam
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS VIEW -->
+        <div id="view-results" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 sm:p-8 shadow-xl max-w-2xl mx-auto w-full space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="text-3xl font-bold text-white">Examination Summary</h2>
+                <p class="text-slate-400 text-sm">Pediatric Nursing Performance Report (SCFHS)</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 bg-slate-900 p-6 rounded-xl border border-slate-700 text-center">
+                <div>
+                    <div class="text-xs uppercase text-slate-400 font-semibold mb-1">Final Score</div>
+                    <div id="res-score" class="text-4xl font-extrabold text-teal-400">0%</div>
+                </div>
+                <div>
+                    <div class="text-xs uppercase text-slate-400 font-semibold mb-1">Pass Status</div>
+                    <div id="res-status" class="text-2xl font-bold text-emerald-500">PASS</div>
+                </div>
+            </div>
+
+            <div class="space-y-3 text-sm text-slate-300">
+                <div class="flex justify-between border-b border-slate-700 pb-2">
+                    <span>Total Questions Attempted:</span>
+                    <span id="res-total" class="font-bold text-white">0</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-700 pb-2">
+                    <span>Correct Answers:</span>
+                    <span id="res-correct" class="font-bold text-emerald-400">0</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-700 pb-2">
+                    <span>Incorrect Answers:</span>
+                    <span id="res-incorrect" class="font-bold text-rose-400">0</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-700 pb-2">
+                    <span>Time Elapsed:</span>
+                    <span id="res-time" class="font-bold text-gold-500">00:00:00</span>
+                </div>
+            </div>
+
+            <div class="flex gap-4 pt-4">
+                <button onclick="reviewExam()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-xl transition text-sm">
+                    Review Questions
+                </button>
+                <button onclick="resetExam()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl transition text-sm">
+                    Configure New Exam
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-6 text-center text-xs text-slate-500 border-t border-slate-800">
+        Pediatric Nursing Board Exam Simulator &bull; SCFHS Professional Healthcare Education Suite
+    </footer>
+
+    <!-- Application Script with Embedded Pediatric Dataset -->
+    <script>
+        const defaultItemBank = {
+            "category": "Pediatric Nursing",
+            "exam_type": "SCFHS",
+            "total_items": 20,
+            "test_items": [
+{
+                    "item_number": 1,
+                    "question": "A 1-year-old child is admitted for hypospadias repair. After surgery, which of the following instruction should be given to the parents?",
+                    "options": [
+                        "Limit activity for 2 weeks",
+                        "Apply ointment or powder freely around the stent",
+                        "Give a child a diet that is low in protein",
+                        "Allow the child to sit straddled on the hip"
+                    ],
+                    "correct_answer": "Limit activity for 2 weeks",
+                    "rationale": "Postoperative care for hypospadias repair requires limiting strenuous activity and toddler mobility for approximately 2 weeks to protect surgical site healing and prevent stent displacement."
+                },
+                {
+                    "item_number": 2,
+                    "question": "A 3-year-old child with an elevated body temperature is administered oral aspirin. The nurse records the body temperature of the child two hours later and finds that it is still elevated. What is the most likely underlying physiology for the delayed response in action of the aspirin?",
+                    "options": [
+                        "High gastric pH",
+                        "Thin epidermis",
+                        "Low muscle tone",
+                        "Short intestines"
+                    ],
+                    "correct_answer": "High gastric pH",
+                    "rationale": "Infants and young children exhibit higher gastric pH levels compared to adults, which alters the ionization and absorption rate of weakly acidic medications like aspirin, leading to delayed onset and clinical response."
+                },
+                {
+                    "item_number": 3,
+                    "question": "An 11 month old boy with cleft lip and palate was discharged from the hospital after surgery. Which of the following statements by the parents indicate appropriate understanding of the teaching instruction?",
+                    "options": [
+                        "I should avoid that my infant's cry as much as possible",
+                        "I will use a spoon to feed my child after the surgery",
+                        "I will put my child on his abdomen after feeding",
+                        "I will use lotion to ease my child's lip irritation"
+                    ],
+                    "correct_answer": "I should avoid that my infant's cry as much as possible",
+                    "rationale": "Excessive crying increases tension and pressure on delicate facial suture lines following cleft lip and palate repair; parents must soothe infants promptly to prevent suture dehiscence."
+                },
+                {
+                    "item_number": 4,
+                    "question": "A full term newborn is admitted to NICU with a diagnosis of meningocele. Which of the following admission assessment is needed?",
+                    "options": [
+                        "Specific gravity of urine",
+                        "Head circumference",
+                        "Weight and length",
+                        "Palpation of the abdomen"
+                    ],
+                    "correct_answer": "Head circumference",
+                    "rationale": "Neural tube defects such as meningocele and myelomeningocele are frequently associated with Arnold-Chiari malformation and developing hydrocephalus, making serial head circumference measurements essential."
+                },
+                {
+                    "item_number": 5,
+                    "question": "A 30-week gestational preterm infant admitted to NICU 2 hours ago starts to have grunting and nasal flaring. Which of the following should the nurse recognize regarding these signs and symptoms?",
+                    "options": [
+                        "Neonate has RDS",
+                        "It is normal in the first 24 hours of birth",
+                        "This is not significant unless they become cyanotic",
+                        "Neonate has hypoglycemia"
+                    ],
+                    "correct_answer": "Neonate has RDS",
+                    "rationale": "Expiratory grunting, nasal flaring, and tachypnea in a preterm neonate are hallmark clinical manifestations of Respiratory Distress Syndrome (RDS) due to pulmonary immaturity."
+                },
+                {
+                    "item_number": 6,
+                    "question": "A 30 weeks of gestational age preterm infant is admitted to the neonatal intensive care unit. The neonate starts to have grunting, tachypnea, and nasal flaring. Which of the following is the responsible factor for this diagnosis?",
+                    "options": [
+                        "Bronchial spasm",
+                        "Immature bronchioles",
+                        "Lack of surfactant",
+                        "Pulmonary overload"
+                    ],
+                    "correct_answer": "Lack of surfactant",
+                    "rationale": "Surfactant deficiency in preterm infants increases surface tension within alveoli, causing widespread alveolar collapse and the clinical presentation of respiratory distress syndrome."
+                },
+                {
+                    "item_number": 7,
+                    "question": "A 7-year-old child is admitted to the pediatric medical ward and his urine analysis result revealed massive proteinuria. The child was diagnosed with Nephrotic Syndrome. Which of the following medication can prevent relapses of the child's condition?",
+                    "options": [
+                        "Antibiotics",
+                        "Corticosteroids",
+                        "Diuretics",
+                        "Immunosuppressive"
+                    ],
+                    "correct_answer": "Corticosteroids",
+                    "rationale": "Corticosteroids (such as prednisone) are the primary pharmacological therapy used to induce remission and manage relapses in minimal change nephrotic syndrome."
+                },
+                {
+                    "item_number": 8,
+                    "question": "An infant was admitted with patent ductus arteriosus. Indomethacin $0.2 mg/kg$ with prostaglandin inhibitor via intravenous route was prescribed. What is the function of indomethacin?",
+                    "options": [
+                        "Assist closure of ductus arteriosus",
+                        "Prevent infection",
+                        "Improve tissue perfusion",
+                        "Preserve hormone level"
+                    ],
+                    "correct_answer": "Assist closure of ductus arteriosus",
+                    "rationale": "Indomethacin is a prostaglandin inhibitor that promotes constriction and closure of a patent ductus arteriosus (PDA) in neonates."
+                },
+                {
+                    "item_number": 9,
+                    "question": "A newborn is diagnosed with Ventricular Septal Defect (VSD). Which of the following information should the nurse give to the newborn's mother?",
+                    "options": [
+                        "Cyanosis will occur most of the time during sleeping",
+                        "Breast feeding is not recommended for your child",
+                        "The defect might close spontaneously after 6 months",
+                        "Blood pressure is different on the child's arm and the leg"
+                    ],
+                    "correct_answer": "The defect might close spontaneously after 6 months",
+                    "rationale": "Many small ventricular septal defects (VSDs) undergo spontaneous closure during the first year of life as myocardial growth occurs[cite: 244]."
+                },
+                {
+                    "item_number": 10,
+                    "question": "A 10-year-old child had an appendectomy yesterday. Which pain scale should the nurse use to assess the child's pain?",
+                    "options": [
+                        "Numeric",
+                        "Faces",
+                        "FLACC",
+                        "Cries"
+                    ],
+                    "correct_answer": "Numeric",
+                    "rationale": "School-age children (typically 8 years and older) have the cognitive and developmental maturity to use a standard 0-10 numeric rating scale for pain assessment."
+                },
+                {
+                    "item_number": 11,
+                    "question": "Infant mortality is a critical indicator of children's health status. Which of the following statements correctly describes the term 'infant mortality'?",
+                    "options": [
+                        "Deaths of infants during the first year of life per 100 live births",
+                        "Death of infants during the first year of life per 1000 live births",
+                        "Death of infants during the first year of life per 10000 live births",
+                        "Death of infants during the first year of life per 100000 live births"
+                    ],
+                    "correct_answer": "Death of infants during the first year of life per 1000 live births",
+                    "rationale": "Infant mortality rate is statistically defined as the number of deaths of infants under one year of age per 1,000 live births in a given population."
+                },
+                {
+                    "item_number": 12,
+                    "question": "A child with rheumatic fever is having severe pain, tenderness, and swelling in his left joint. What should the nurse do to alleviate his pain?",
+                    "options": {
+                        "Apply heat on the affected joint",
+                        "Put the joint in flexion position",
+                        "Apply cold compresses to the joints",
+                        "Ask the child to walk for 15 minutes"
+                    ],
+                    "correct_answer": "Apply cold compresses to the joints",
+                    "rationale": "Polyarthritis associated with acute rheumatic fever responds best to cold compresses or prescribed anti-inflammatory medications for acute joint pain and swelling."
+                },
+                {
+                    "item_number": 13,
+                    "question": "A 9-year-old child is admitted to the Postoperative Care Unit following a heart transplant. The nurse administers cyclosporine by intravenous infusion. Fifteen minutes later the child has difficulty breathing, his skin feels cold and clammy, and he appears restless. What is the most appropriate initial nursing action?",
+                    "options": [
+                        "Ensure airway patency",
+                        "Administer oxygen therapy",
+                        "Discontinue intravenous infusion",
+                        "Administer intramuscular epinephrine"
+                    ],
+                    "correct_answer": "Ensure airway patency",
+                    "rationale": "In any acute crisis or potential anaphylactic/hypersensitivity reaction, maintaining a patent airway and assessing respiratory status takes immediate priority according to ABC protocols."
+                },
+                {
+                    "item_number": 14,
+                    "question": "A nurse in the Neonatal Intensive Care Unit is caring for a premature newborn diagnosed with Respiratory Distress Syndrome (RDS), and the doctor ordered administering surfactant. Surfactant should be given by which of the following routes?",
+                    "options": [
+                        "Intravenous",
+                        "Subcutaneous",
+                        "Intramuscular",
+                        "Endotracheal"
+                    ],
+                    "correct_answer": "Endotracheal",
+                    "rationale": "Exogenous surfactant is instilled directly into the trachea via an endotracheal tube to ensure direct distribution into the pulmonary alveoli."
+                },
+                {
+                    "item_number": 15,
+                    "question": "A 37 weeks of gestation neonate is admitted to the Neonatal Intensive Care Unit immediately after delivery because the mother had a fever in the last 2 days before delivery. Which of the following is the most expected finding for neonatal sepsis?",
+                    "options": {
+                        "Decreased urinary output",
+                        "Poor feeding",
+                        "Stable body weight",
+                        "Sudden hyperthermia"
+                    ],
+                    "correct_answer": "Poor feeding",
+                    "rationale": "Neonatal sepsis frequently presents with subtle and non-specific signs, including lethargy, poor feeding, temperature instability, and decreased activity."
+                },
+                {
+                    "item_number": 16,
+                    "question": "Which of the following organisms can cause a neonate to develop septicemia, including respiratory distress, apnea, and hypotension within 12 hours of birth?",
+                    "options": {
+                        "Escherichia coli",
+                        "Cytomegalovirus",
+                        "Varicella zoster virus",
+                        "Group B streptococcus"
+                    ],
+                    "correct_answer": "Group B streptococcus",
+                    "rationale": "Group B Streptococcus (GBS) is a primary pathogen responsible for early-onset neonatal sepsis, pneumonia, and meningitis acquired vertically during labor and delivery."
+                },
+                {
+                    "item_number": 17,
+                    "question": "While a nurse is assessing an infant born 11 hours ago by cesarean section, she auscultates moist lung sounds. Which of the following is the most likely interpretation?",
+                    "options": {
+                        "Abnormal finding",
+                        "Normal finding",
+                        "Pneumothorax",
+                        "Surfactant aspiration"
+                    ],
+                    "correct_answer": "Normal finding",
+                    "rationale": "Particularly following cesarean delivery where thoracic squeeze is absent, transient retention of fetal lung fluid can cause mild moist breath sounds that clear within the first 24 hours."
+                },
+                {
+                    "item_number": 18,
+                    "question": "A newborn has small, whitish, pinpoint spots over the nose, which the nurse knows are caused by retained sebaceous secretions. The nurse identifies this as:",
+                    "options": {
+                        "Echymosis",
+                        "Milia",
+                        "Telangiectasia nevi",
+                        "Mongolian spots"
+                    ],
+                    "correct_answer": "Milia",
+                    "rationale": "Milia are benign, superficial keratin cysts appearing as tiny white papules on the nose and chin that resolve spontaneously without treatment."
+                },
+                {
+                    "item_number": 19,
+                    "question": "A 25 years old primipara is admitted for labor. The infant is delivered by forceps because of breech presentation, and full body assessment shows a large blue macular marking over the left buttocks. Which of the following is the most likely cause?",
+                    "options": {
+                        "Echymosis",
+                        "Nevus flammeus",
+                        "Telangiectasia nevi",
+                        "Mongolian spots"
+                    ],
+                    "correct_answer": "Mongolian spots",
+                    "rationale": "Mongolian spots are benign, flat congenital birthmarks with dark bluish-gray pigmentation commonly found over the lumbosacral region in infants of Asian, African, or Mediterranean descent."
+                },
+                {
+                    "item_number": 20,
+                    "question": "A nurse was observing the stool color for a newborn on the first day after delivery. What is the expected color of stool for this newborn?",
+                    "options": {
+                        "Brown",
+                        "Light green",
+                        "Light brown",
+                        "Brownish green"
+                    ],
+                    "correct_answer": "Brownish green",
+                    "rationale": "Meconium, the initial newborn stool passed within the first 24-48 hours, is thick, sticky, and dark brownish-green in appearance."
+                },
+{
+        "item_number": 21,
+        "question": "A nurse is caring for an infant diagnosed with tetralogy of Fallot who suddenly develops a hypercyanotic spell (tet spell). Which of the following is the immediate nursing action?",
+        "options": [
+            "Place the infant in a knee-chest position",
+            "Administer a fluid bolus of normal saline",
+            "Place the infant in the Trendelenburg position",
+            "Prepare the infant for immediate intubation"
+        ],
+        "correct_answer": "Place the infant in a knee-chest position",
+        "rationale": "Placing the infant in a knee-chest position increases systemic vascular resistance, which decreases right-to-left shunting across the ventricular septal defect and increases pulmonary blood flow."
+    },
+    {
+        "item_number": 22,
+        "question": "A 4-year-old child is brought to the emergency department with drooling, dysphagia, muffled voice, and high fever, appearing anxious and sitting in a tripod position. Which of the following is the most critical nursing priority?",
+        "options": [
+            "Examine the oropharynx with a tongue depressor",
+            "Obtain a throat culture immediately",
+            "Keep the child calm and avoid disturbing the airway",
+            "Administer oral clear liquids"
+        ],
+        "correct_answer": "Keep the child calm and avoid disturbing the airway",
+        "rationale": "These clinical signs indicate acute epiglottis. Inspecting the throat or agitating the child can trigger sudden, fatal complete airway obstruction; the airway must not be manipulated without emergency equipment ready."
+    },
+    {
+        "item_number": 23,
+        "question": "An 8-month-old infant is admitted with severe dehydration secondary to acute gastroenteritis. Which of the following clinical findings is the most reliable indicator of moderate to severe dehydration in an infant?",
+        "options": [
+            "Bounding peripheral pulses",
+            "Tachycardia and sunken fontanel",
+            "Flushed skin and excessive tearing",
+            "Hypertension and periorbital edema"
+        ],
+        "correct_answer": "Tachycardia and sunken fontanel",
+        "rationale": "Tachycardia is often the earliest physiological sign of intravascular volume depletion, while a sunken anterior fontanel reflects decreased cerebrospinal fluid pressure and fluid deficit in infants."
+    },
+    {
+        "item_number": 24,
+        "question": "A school-age child is diagnosed with acute glomerulonephritis following a streptococcal infection. Which of the following lab findings is characteristic of this disorder?",
+        "options": [
+            "Elevated serum creatinine and hematuria",
+            "Decreased blood urea nitrogen and hypoglycemia",
+            "Thrombocytopenia and metabolic alkalosis",
+            "Elevated serum albumin and polyuria"
+        ],
+        "correct_answer": "Elevated serum creatinine and hematuria",
+        "rationale": "Acute post-streptococcal glomerulonephritis is characterized by glomerular inflammation leading to hematuria, proteinuria, and impaired renal function evidenced by elevated BUN and serum creatinine."
+    },
+    {
+        "item_number": 25,
+        "question": "A 2-year-old toddler is admitted with suspected iron deficiency anemia. Which laboratory result is most consistent with this diagnosis?",
+        "options": [
+            "Microcytic, hypochromic red blood cells",
+            "Macrocytic, hyperchromic red blood cells",
+            "Normocytic, normochromic red blood cells",
+            "Elevated total iron-binding capacity with high serum iron"
+        ],
+        "correct_answer": "Microcytic, hypochromic red blood cells",
+        "rationale": "Iron deficiency anemia in toddlers typically presents with low hemoglobin and hematocrit levels, characterized by microcytic (small) and hypochromic (pale) erythrocytes."
+    },
+    {
+        "item_number": 26,
+        "question": "A nurse is assessing a newborn and notes a unilateral absence of the Moro reflex, along with crepitus and limited movement of the right arm. Which of the following birth injuries should the nurse suspect?",
+        "options": [
+            "Clavicle fracture",
+            "Brachial plexus palsy (Erb's palsy)",
+            "Congenital hip dislocation",
+            "Spinal cord transection"
+        ],
+        "correct_answer": "Clavicle fracture",
+        "rationale": "A fractured clavicle is a common birth injury in shoulder dystocia or large infants, manifesting as localized pain, crepitus, and an asymmetric Moro reflex on the affected side."
+    },
+    {
+        "item_number": 27,
+        "question": "A 6-month-old infant is scheduled for an initial immunization series. According to standard pediatric schedules, which vaccines should the nurse administer?",
+        "options": [
+            "DTaP, Hib, IPV, PCV, HepB, and Rotavirus",
+            "MMR, Varicella, and Hepatitis A",
+            "Tdap booster and Meningococcal conjugate",
+            "HPV vaccine series"
+        ],
+        "correct_answer": "DTaP, Hib, IPV, PCV, HepB, and Rotavirus",
+        "rationale": "At 6 months of age, infants receive the third dose of DTaP, Hib, IPV, PCV, Hepatitis B, and Rotavirus vaccines according to CDC immunization guidelines."
+    },
+    {
+        "item_number": 28,
+        "question": "An infant with pyloric stenosis is admitted with persistent projectile vomiting. Which acid-base imbalance is the nurse most likely to detect on the laboratory report?",
+        "options": [
+            "Metabolic alkalosis",
+            "Metabolic acidosis",
+            "Respiratory alkalosis",
+            "Respiratory acidosis"
+        ],
+        "correct_answer": "Metabolic alkalosis",
+        "rationale": "Vomiting gastric contents containing hydrochloric acid results in the loss of hydrogen and chloride ions, leading to hypochloremic metabolic alkalosis."
+    },
+    {
+        "item_number": 29,
+        "question": "A 5-year-old child is diagnosed with acute lymphoblastic leukemia (ALL) and is receiving chemotherapy. Which of the following is the most crucial preventive nursing intervention?",
+        "options": [
+            "Strict hand hygiene and neutropenic precautions",
+            "High-protein and strict fluid restriction",
+            "Daily participation in high-impact contact sports",
+            "Avoiding all routine physical assessments"
+        ],
+        "correct_answer": "Strict hand hygiene and neutropenic precautions",
+        "rationale": "Chemotherapy induces bone marrow suppression, causing neutropenia. Protecting the immunosuppressed child from infection through strict hand hygiene and precautions is paramount."
+    },
+    {
+        "item_number": 30,
+        "question": "A nurse is educating the mother of a 3-year-old child diagnosed with cystic fibrosis about pancreatic enzyme replacement therapy. When should these enzymes be administered?",
+        "options": [
+            "Immediately before or with meals and snacks",
+            "One hour after finishing a meal",
+            "Only at bedtime on an empty stomach",
+            "Once daily in the morning"
+        ],
+        "correct_answer": "Immediately before or with meals and snacks",
+        "rationale": "Pancreatic enzymes must be taken with meals and snacks to ensure they are mixed properly with food to aid in the digestion and absorption of fats, proteins, and carbohydrates."
+    },
+    {
+        "item_number": 31,
+        "question": "A 3-week-old infant is brought to the clinic with a history of forceful, non-bilious projectile vomiting immediately after feeding. Which of the following physical examination findings is most characteristic of this condition?",
+        "options": [
+            "An olive-shaped mass in the epigastric region",
+            "Right lower quadrant tenderness and guarding",
+            "A scaphoid abdomen with absent bowel sounds",
+            "A palpable lower liver edge and splenomegaly"
+        ],
+        "correct_answer": "An olive-shaped mass in the epigastric region",
+        "rationale": "Hypertrophic pyloric stenosis classically presents with projectile vomiting and a palpable, firm, movable, olive-shaped mass in the right upper quadrant or epigastrium."
+    },
+    {
+        "item_number": 32,
+        "question": "A nurse is assessing a toddler with intussusception. Which classic triad of symptoms should the nurse expect to find?",
+        "options": [
+            "Abdominal pain, currant jelly stools, and a sausage-shaped mass",
+            "Projectile vomiting, weight gain, and persistent diarrhea",
+            "High fever, right lower quadrant pain, and constipation",
+            "Epigastric pain, tarry black stools, and jaundice"
+        ],
+        "correct_answer": "Abdominal pain, currant jelly stools, and a sausage-shaped mass",
+        "rationale": "Intussusception is characterized by sudden episodic abdominal pain, vomiting, a palpable sausage-shaped abdominal mass, and stools mixed with blood and mucus (currant jelly stools)."
+    },
+    {
+        "item_number": 33,
+        "question": "A 2-year-old child ingests a small quantity of furniture polish. What is the most appropriate immediate action for the nurse to advise?",
+        "options": [
+            "Administer syrup of ipecac immediately at home",
+            "Bring the child to the emergency department immediately without inducing vomiting",
+            "Give the child large amounts of vinegar to neutralize the chemical",
+            "Observe the child at home for 24 hours"
+        ],
+        "correct_answer": "Bring the child to the emergency department immediately without inducing vomiting",
+        "rationale": "Hydrocarbons (such as furniture polish) carry a high risk of aspiration pneumonia if regurgitated or induced to vomit; emesis is strictly contraindicated."
+    },
+    {
+        "item_number": 34,
+        "question": "A school-age child is diagnosed with Type 1 Diabetes Mellitus and is learning self-injection. Which site provides the most rapid and consistent subcutaneous insulin absorption?",
+        "options": [
+            "Abdomen",
+            "Thigh",
+            "Upper outer arm",
+            "Buttock"
+        ],
+        "correct_answer": "Abdomen",
+        "rationale": "Subcutaneous insulin absorption is fastest and most consistent when injected into the abdominal wall compared to other injection sites."
+    },
+    {
+        "item_number": 35,
+        "question": "A nurse is caring for an adolescent with newly diagnosed Graves' disease (hyperthyroidism). Which of the following clinical manifestations should the nurse expect?",
+        "options": [
+            "Weight loss, heat intolerance, and nervousness",
+            "Weight gain, cold intolerance, and sluggishness",
+            "Constipation, bradycardia, and dry skin",
+            "Edema, lethargy, and decreased appetite"
+        ],
+        "correct_answer": "Weight loss, heat intolerance, and nervousness",
+        "rationale": "Hyperthyroidism accelerates basal metabolism, leading to weight loss despite increased appetite, heat intolerance, tachycardia, anxiety, and nervousness."
+    },
+    {
+        "item_number": 36,
+        "question": "An infant is diagnosed with Hirschsprung disease (congenital aganglionic megacolon). Which clinical manifestation is typically observed during the neonatal period?",
+        "options": [
+            "Failure to pass meconium within the first 24 to 48 hours",
+            "Frequent projectile vomiting after every feed",
+            "Passage of large amounts of fatty, foul-smelling stools",
+            "Early onset of painless bright red rectal bleeding"
+        ],
+        "correct_answer": "Failure to pass meconium within the first 24 to 48 hours",
+        "rationale": "The hallmark sign of Hirschsprung disease in newborns is the failure to pass meconium within the first 24 to 48 hours of life, accompanied by abdominal distension."
+    },
+    {
+        "item_number": 37,
+        "question": "A nurse is caring for a 4-year-old child admitted with acute asthma exacerbation. Which assessment finding indicates worsening respiratory status and impending respiratory failure?",
+        "options": [
+            "Loud bilateral expiratory wheezing",
+            "Diminished breath sounds and silent chest",
+            "Increased coughing productive of thick mucus",
+            "Mild tachypnea and restlessness"
+        ],
+        "correct_answer": "Diminished breath sounds and silent chest",
+        "rationale": "A silent chest (absence of wheezing or breath sounds) in an acute asthma attack signifies severe bronchoconstriction and minimal air movement, representing an immediate life-threatening emergency."
+    },
+    {
+        "Item_number": 38,
+        "question": "A school-age child is admitted with suspected acute appendicitis. Which of the following is a classic clinical sign associated with appendicitis?",
+        "options": [
+            "McBurney point tenderness",
+            "Cullen sign",
+            "Murphy sign",
+            "Turner sign"
+        ],
+        "correct_answer": "McBurney point tenderness",
+        "rationale": "Pain localized at McBurney's point (situated in the right lower quadrant between the umbilicus and the right anterior superior iliac spine) is a classic indicator of acute appendicitis."
+    },
+    {
+        "item_number": 39,
+        "question": "A nurse is teaching the parents of a toddler with newly diagnosed celiac disease. Which dietary restriction must be emphasized?",
+        "options": [
+            "Eliminating wheat, rye, barley, and oats",
+            "Avoiding all dairy and lactose products",
+            "Restricting citrus fruits and vegetables",
+            "Eliminating pureed meat and poultry"
+        ],
+        "correct_answer": "Eliminating wheat, rye, barley, and oats",
+        "rationale": "Celiac disease requires a lifelong gluten-free diet, which involves eliminating grains containing gluten: wheat, rye, barley, and regular oats (unless certified pure)."
+    },
+    {
+        "item_number": 40,
+        "question": "A 9-year-old child with severe burns is admitted to the pediatric intensive care unit. Which physiological response is expected during the initial emergent phase of burn shock?",
+        "options": [
+            "Capillary leak resulting in hypovolemia and hyponatremia",
+            "Massive fluid retention and hypertension",
+            "Rapid hemodilution and hyperkalemia",
+            "Immediate renal failure with massive polyuria"
+        ],
+        "correct_answer": "Capillary leak resulting in hypovolemia and hyponatremia",
+        "rationale": "Severe burns trigger systemic capillary permeability, causing rapid shifting of intravascular fluid into interstitial spaces, leading to hypovolemic shock, hemoconcentration, and electrolyte imbalances."
+    },
+{
+        "item_number": 41,
+        "question": "A 2-year-old child is brought to the emergency department after swallowing household drain cleaner. Which of the following is the priority nursing action?",
+        "options": [
+            "Maintain a patent airway and prepare for immediate endoscopy",
+            "Induce vomiting immediately using syrup of ipecac",
+            "Administer activated charcoal mixed with fruit juice",
+            "Neutralize the chemical by giving the child vinegar"
+        ],
+        "correct_answer": "Maintain a patent airway and prepare for immediate endoscopy",
+        "rationale": "Ingestion of strong caustic substances causes severe chemical burns to the upper airway and gastrointestinal tract. Inducing vomiting or neutralizing acids/alkalis is contraindicated; the priority is airway stabilization and diagnostic endoscopy."
+    },
+    {
+        "item_number": 42,
+        "question": "A nurse is assessing an 8-month-old infant during a routine well-child visit. Which of the following developmental milestones should the nurse expect the infant to have achieved?",
+        "options": [
+            "Sitting unsupported without using hands for balance",
+            "Walking independently across the room",
+            "Building a tower of two blocks",
+            "Using a spoon and fork without spilling"
+        ],
+        "correct_answer": "Sitting unsupported without using hands for balance",
+        "rationale": "By 8 months of age, a typical infant is able to sit steadily without support and lean forward to pick up objects. Walking and block towers are milestones achieved later in toddlerhood."
+    },
+    {
+        "item_number": 43,
+        "question": "A school-age child is diagnosed with immune thrombocytopenic purpura (ITP). Which of the following laboratory findings should the nurse anticipate?",
+        "options": [
+            "Significantly decreased platelet count with normal white blood cells",
+            "Elevated red blood cell count and low hemoglobin levels",
+            "Prolonged partial thromboplastin time with normal platelets",
+            "Markedly increased total leukocyte count and immature blasts"
+        ],
+        "correct_answer": "Significantly decreased platelet count with normal white blood cells",
+        "rationale": "ITP is an acquired autoimmune bleeding disorder characterized by destruction of platelets, resulting in isolated thrombocytopenia (low platelet count) while white and red blood cell counts remain generally normal."
+    },
+    {
+        "item_number": 44,
+        "question": "An adolescent is admitted with diabetic ketoacidosis (DKA). Which of the following IV fluids should the nurse expect to initiate first?",
+        "options": [
+            "0.9% Normal Saline solution",
+            "5% Dextrose in Water (D5W)",
+            "0.45% Half Normal Saline with 5% Dextrose",
+            "3% Hypertonic Saline solution"
+        ],
+        "correct_answer": "0.9% Normal Saline solution",
+        "rationale": "Initial management of DKA focuses on restoring intravascular volume and tissue perfusion using isotonic fluids, such as 0.9% Normal Saline, before adding dextrose-containing solutions."
+    },
+    {
+        "item_number": 45,
+        "question": "A nurse is caring for a newborn diagnosed with congenital hypothyroidism. Which of the following clinical features should the nurse expect during the assessment?",
+        "options": [
+            "Prolonged jaundice, lethargy, and a large protruding tongue",
+            "Extreme restlessness, rapid weight loss, and tremors",
+            "Bulging anterior fontanel, high-pitched cry, and hypertension",
+            "Tachycardia, warm moist skin, and excessive tearing"
+        ],
+        "correct_answer": "Prolonged jaundice, lethargy, and a large protruding tongue",
+        "rationale": "Congenital hypothyroidism often presents subtly at birth due to maternal hormone transfer, but signs soon include lethargy, poor feeding, prolonged physiological jaundice, coarse facial features, and an enlarged tongue."
+    },
+    {
+        "item_number": 46,
+        "question": "A 6-year-old child is scheduled for a tonsillectomy and adenoidectomy. Which of the following assessments is most critical to perform during the immediate postoperative recovery period?",
+        "options": [
+            "Observing for frequent swallowing or bright red blood in the mouth",
+            "Assessing for bilateral Babinski reflexes every 15 minutes",
+            "Checking deep tendon reflexes in both lower extremities",
+            "Measuring abdominal girth and auscultating bowel sounds"
+        ],
+        "correct_answer": "Observing for frequent swallowing or bright red blood in the mouth",
+        "rationale": "Frequent swallowing while asleep or resting is the earliest and most reliable indicator of concealed hemorrhage following a tonsillectomy, requiring prompt nursing intervention."
+    },
+    {
+        "item_number": 47,
+        "question": "A nurse is teaching the parents of an infant with developmental dysplasia of the hip (DDH) who is treated with a Pavlik harness. Which instruction is essential?",
+        "options": [
+            "Maintain continuous wear of the harness and check skin folds daily for irritation",
+            "Remove the harness for 2 hours daily to allow skin breathing and stretching",
+            "Apply baby lotion and powder generously under all straps to prevent chafing",
+            "Adjust the chest and leg straps weekly as the infant grows taller"
+        ],
+        "correct_answer": "Maintain continuous wear of the harness and check skin folds daily for irritation",
+        "rationale": "The Pavlik harness must be worn continuously to maintain the femoral head within the acetabulum. Parents should check skin folds for redness or breakdown without altering strap settings themselves."
+    },
+    {
+        "item_number": 48,
+        "question": "A 10-month-old infant is admitted with acute diarrhea and moderate dehydration. Which of the following is the preferred first-line treatment for rehydration?",
+        "options": [
+            "Oral rehydration solution (ORS) containing balanced electrolytes and glucose",
+            "Rapid intravenous boluses of hypotonic saline solution",
+            "Undiluted apple juice or sweetened carbonated beverages",
+            "Strict fluid restriction combined with broad-spectrum antibiotics"
+        ],
+        "correct_answer": "Oral rehydration solution (ORS) containing balanced electrolytes and glucose",
+        "rationale": "Oral rehydration therapy with an optimized electrolyte and glucose solution is the safe, effective first-line standard for treating mild to moderate dehydration from acute gastroenteritis."
+    },
+    {
+        "item_number": 49,
+        "question": "A nurse is caring for a child diagnosed with nephrotic syndrome who is receiving high-dose corticosteroid therapy. Which of the following complications must the nurse monitor for closely?",
+        "options": [
+            "Increased susceptibility to infection and secondary illness",
+            "Rapid and permanent weight loss and muscle wasting",
+            "Severe hypotension and profound hypoglycemia",
+            "Permanent structural changes in cardiac valves"
+        ],
+        "correct_answer": "Increased susceptibility to infection and secondary illness",
+        "rationale": "Corticosteroids exert potent immunosuppressive effects, placing children on high-dose therapy at high risk for masked or severe infections, requiring vigilant monitoring."
+    },
+    {
+        "item_number": 50,
+        "question": "A school-age child with acute asthma is prescribed a metered-dose inhaler (MDI) with a spacer. What is the primary purpose of using a spacer device?",
+        "options": [
+            "To increase drug deposition in the lower airways and reduce local oropharyngeal side effects",
+            "To filter out large dust particles from room air before inhalation",
+            "To shorten the time required to complete each medication dose",
+            "To eliminate the need for coordinating breathing with actuation"
+        ],
+        "correct_answer": "To increase drug deposition in the lower airways and reduce local oropharyngeal side effects",
+        "rationale": "Spacers slow down aerosol velocity and trap larger particles, allowing smaller drug particles to reach deep pulmonary airways while reducing medication deposition in the mouth."
+    },
+    {
+        "item_number": 51,
+        "question": "An infant is diagnosed with galactosemia. Which of the following formulas must the nurse instruct the parents to use?",
+        "options": [
+            "Soy-based or elemental formula free of lactose and galactose",
+            "Standard cow's milk-based infant formula",
+            "Whole goat's milk fortified with vitamins",
+            "Lactose-reduced dairy formula"
+        ],
+        "correct_answer": "Soy-based or elemental formula free of lactose and galactose",
+        "rationale": "Galactosemia is an inherited metabolic disorder where the body cannot metabolize galactose; infants must strictly avoid all milk products containing lactose and galactose, requiring soy or elemental formulas."
+    },
+    {
+        "item_number": 52,
+        "question": "A nurse is assessing a newborn 1 hour after birth. Which finding requires immediate reporting to the healthcare provider?",
+        "options": [
+            "Generalized sternal retractions and central cyanosis",
+            "Passing of dark green meconium stool",
+            "A heart rate of 145 beats per minute when crying",
+            "Mild acrocyanosis of the hands and feet"
+        ],
+        "correct_answer": "Generalized sternal retractions and central cyanosis",
+        "rationale": "Sternal retractions, nasal flaring, and central cyanosis indicate significant respiratory distress or congenital heart defects requiring immediate intervention, whereas acrocyanosis and meconium passage are normal early findings."
+    },
+    {
+        "item_number": 53,
+        "question": "A 3-year-old child is admitted with a diagnosis of croup (laryngotracheobronchitis). Which of the following treatments should the nurse expect to administer?",
+        "options": [
+            "Cool mist humidification and a single dose of oral corticosteroids",
+            "Prophylactic broad-spectrum intravenous antivirals",
+            "Heated high-flow oxygen and continuous mechanical ventilation",
+            "Immediate surgical decompression of the trachea"
+        ],
+        "correct_answer": "Cool mist humidification and a single dose of oral corticosteroids",
+        "rationale": "Mild to moderate croup is typically managed with cool mist vapor, hydration, and corticosteroids (such as dexamethasone) to reduce subglottic inflammation and edema."
+    },
+    {
+        "item_number": 54,
+        "question": "A nurse is caring for an adolescent with cystic fibrosis. Which nutritional supplementation is essential with every meal to support proper growth and digestion?",
+        "options": [
+            "Pancreatic enzyme replacement capsules",
+            "Intravenous fat emulsions and electrolytes",
+            "High-sodium salt tablets and iron drops",
+            "Potassium chloride oral solution"
+        ],
+        "correct_answer": "Pancreatic enzyme replacement capsules",
+        "rationale": "Cystic fibrosis causes pancreatic duct obstruction, preventing digestive enzymes from reaching the GI tract. Pancreatic enzyme replacement is required with all meals and snacks to digest fats, proteins, and carbs."
+    },
+    {
+        "item_number": 55,
+        "question": "A newborn is diagnosed with myelomeningocele. Prior to surgical closure, which positioning technique is critical to protect the sac and prevent infection?",
+        "options": [
+            "Prone position with a sterile, moist non-adherent saline dressing over the defect",
+            "Supine position with direct pressure applied to the lower back",
+            "Semi-Fowler position with a tight abdominal binder",
+            "Trendelenburg position wrapped in a warm blanket"
+        ],
+        "correct_answer": "Prone position with a sterile, moist non-adherent saline dressing over the defect",
+        "rationale": "The infant must be kept prone to prevent pressure on the neural sac, and the defect must be covered with sterile, moist saline dressings to prevent drying, rupture, and CNS infection."
+    },
+    {
+        "item_number": 56,
+        "question": "A 4-year-old child is brought to the clinic presenting with a target-like rash, facial edema, and peeling skin following a sulfa medication course. Which condition should the nurse suspect?",
+        "options": [
+            "Stevens-Johnson syndrome",
+            "Atopic dermatitis (eczema)",
+            "Acute urticaria (hives)",
+            "Psoriasis vulgaris"
+        ],
+        "correct_answer": "Stevens-Johnson syndrome",
+        "rationale": "Stevens-Johnson syndrome is a severe, life-threatening mucocutaneous hypersensitivity reaction frequently triggered by medications like sulfonamides, characterized by blistering skin lesions and mucosal erosion."
+    },
+    {
+        "item_number": 57,
+        "question": "A nurse is teaching the parents of a toddler diagnosed with phenylketonuria (PKU). Which dietary modification is necessary?",
+        "options": [
+            "Restricting dietary phenylalanine by avoiding high-protein foods like meat, dairy, and eggs",
+            "Eliminating all complex carbohydrates and starchy vegetables",
+            "Increasing dietary intake of natural milk proteins and nuts",
+            "Ensuring a high-fat diet with unlimited dairy consumption"
+        ],
+        "correct_answer": "Restricting dietary phenylalanine by avoiding high-protein foods like meat, dairy, and eggs",
+        "rationale": "PKU is an inborn error of metabolism where phenylalanine cannot be broken down, requiring a lifelong diet low in phenylalanine (avoiding meat, eggs, dairy, and nuts) to prevent brain damage."
+    },
+    {
+        "item_number": 58,
+        "question": "An infant with suspected congenital heart defect is noted to have bounding peripheral pulses and a continuous machinery-like murmur. Which condition is most consistent with these findings?",
+        "options": [
+            "Patent ductus arteriosus (PDA)",
+            "Tetralogy of Fallot",
+            "Coarctation of the aorta",
+            "Pulmonary valve stenosis"
+        ],
+        "correct_answer": "Patent ductus arteriosus (PDA)",
+        "rationale": "A patent ductus arteriosus allows blood to shunt from the aorta to the pulmonary artery, producing a characteristic continuous machinery murmur and bounding peripheral pulses due to diastolic run-off."
+    },
+    {
+        "item_number": 59,
+        "question": "A nurse is planning care for a school-age child diagnosed with acute rheumatic fever. Which laboratory test is most useful in documenting a preceding streptococcal infection?",
+        "options": [
+            "Antistreptolysin O (ASO) titer",
+            "Complete blood count with differential",
+            "Serum electrolyte and blood urea nitrogen panel",
+            "Coagulation profile (PT and INR)"
+        ],
+        "correct_answer": "Antistreptolysin O (ASO) titer",
+        "rationale": "An elevated or rising ASO titer confirms a recent group A beta-hemolytic streptococcal infection, which is a major diagnostic criterion and historical requirement for acute rheumatic fever."
+    },
+    {
+        "item_number": 60,
+        "question": "A nurse is assessing a toddler admitted with acute gastroenteritis and severe dehydration. Which of the following findings is indicative of circulatory collapse (shock)?",
+        "options": [
+            "Hypotension, thready rapid pulses, and delayed capillary refill",
+            "Hypertension, bounding pulses, and flushed warm skin",
+            "Bradycardia, normal blood pressure, and brisk skin turgor",
+            "Normal heart rate with elevated urine output"
+        ],
+        "correct_answer": "Hypotension, thready rapid pulses, and delayed capillary refill",
+        "rationale": "Decompensated hypovolemic shock in children is characterized by failing perfusion evidenced by hypotension, weak thready pulses, cool mottled extremities, and prolonged capillary refill."
+    },
+{
+        "item_number": 61,
+        "question": "A 5-year-old child is admitted to the pediatric unit with nephrotic syndrome and generalized edema. Which of the following nursing interventions is most appropriate to manage the fluid status?",
+        "options": [
+            "Administer prescribed diuretics and monitor daily weight and abdominal girth",
+            "Encourage unrestricted fluid intake to prevent severe dehydration",
+            "Apply hot moist compresses to edematous extremities every 4 hours",
+            "Restrict dietary sodium intake while encouraging high fluid loading"
+        ],
+        "correct_answer": "Administer prescribed diuretics and monitor daily weight and abdominal girth",
+        "rationale": "Management of nephrotic syndrome edema involves reducing fluid retention using diuretics, monitoring precise daily weights, and measuring abdominal girth to assess ascites."
+    },
+    {
+        "item_number": 62,
+        "question": "A nurse is providing discharge education to the parents of an infant who underwent surgical correction for hypospadias. Which of the following instructions should be included?",
+        "options": [
+            "Avoid tub baths until the stent or catheter is removed by the physician",
+            "Apply petroleum jelly liberally and change the diaper less frequently",
+            "Encourage the toddler to walk and run actively to promote circulation",
+            "Administer strong narcotic analgesics every 2 hours around the clock"
+        ],
+        "correct_answer": "Avoid tub baths until the stent or catheter is removed by the physician",
+        "rationale": "To prevent urinary tract infections and protect the surgical site following hypospadias repair, tub baths are prohibited until the urinary stent or catheter is removed."
+    },
+    {
+        "item_number": 63,
+        "question": "A nurse is assessing a 3-week-old neonate and suspects a diagnosis of developmental dysplasia of the hip (DDH). Which clinical finding should the nurse expect to observe?",
+        "options": [
+            "Asymmetry of the gluteal and thigh skin folds",
+            "Symmetrical leg length and full active abduction",
+            "Downward displacement of both lower extremities",
+            "Prominent bilateral crepitus during knee flexion"
+        ],
+        "correct_answer": "Asymmetry of the gluteal and thigh skin folds",
+        "rationale": "Key signs of developmental dysplasia of the hip in infants include asymmetry of the gluteal and thigh folds, limited hip abduction on the affected side, and positive Ortolani or Barlow maneuvers."
+    },
+    {
+        "item_number": 64,
+        "question": "An 8-year-old child is brought to the pediatric emergency department experiencing an acute asthma attack. Auscultation reveals inspiratory and expiratory wheezing and diminished breath sounds. Which pharmacological agent is the immediate priority?",
+        "options": [
+            "Short-acting beta-2 agonist (e.g., Albuterol) via nebulizer",
+            "Long-acting oral beta-2 agonist maintenance capsule",
+            "Inhaled corticosteroid powder twice daily",
+            "Subcutaneous long-acting insulin suspension"
+        ],
+        "correct_answer": "Short-acting beta-2 agonist (e.g., Albuterol) via nebulizer",
+        "rationale": "Quick-relief rescue medications such as inhaled short-acting beta-2 agonists are the primary and immediate intervention for acute bronchospasm during asthma exacerbations."
+    },
+    {
+        "item_number": 65,
+        "question": "A nurse is assessing an infant with acute gastroenteritis who has been vomiting and having watery diarrhea for two days. Which clinical sign indicates significant hypokalemia?",
+        "options": [
+            "Muscle weakness, lethargy, and decreased bowel sounds",
+            "Hyperactive reflexes, muscle tetany, and hypertension",
+            "Bounding peripheral pulses and flushed warm skin",
+            "Rapid deep breathing with Kussmaul respiration"
+        ],
+        "correct_answer": "Muscle weakness, lethargy, and decreased bowel sounds",
+        "rationale": "Potassium depletion affects neuromuscular and smooth muscle function, leading to skeletal muscle weakness, lethargy, hyporeflexia, and decreased or absent bowel sounds."
+    },
+    {
+        "item_number": 66,
+        "question": "A nurse is caring for a school-age child diagnosed with iron deficiency anemia. Which dietary recommendation should the nurse emphasize to the parents?",
+        "options": [
+            "Provide iron-rich foods such as lean red meats, spinach, and fortified cereals",
+            "Encourage unlimited cow's milk consumption to replace meals",
+            "Eliminate all vitamin C sources to prevent iron absorption interference",
+            "Offer high-fiber raw vegetables exclusively without supplements"
+        ],
+        "correct_answer": "Provide iron-rich foods such as lean red meats, spinach, and fortified cereals",
+        "rationale": "Iron deficiency anemia is managed by increasing dietary iron intake using lean red meat, dark green leafy vegetables, and iron-fortified cereals, often paired with vitamin C to enhance absorption."
+    },
+    {
+        "item_number": 67,
+        "question": "A newborn infant is admitted to the nursery with suspected esophageal atresia. Which classic clinical manifestation should the nurse anticipate during initial feeding attempts?",
+        "options": [
+            "Choking, coughing, and cyanosis immediately upon feeding",
+            "Forceful projectile vomiting of non-bilious curdled milk",
+            "Passage of explosive watery green stools within minutes",
+            "Marked abdominal distension with visible peristaltic waves"
+        ],
+        "correct_answer": "Choking, coughing, and cyanosis immediately upon feeding",
+        "rationale": "Esophageal atresia typically presents with the three C's: coughing, choking, and cyanosis when saliva or feedings accumulate in the blind upper esophageal pouch and overflow into the trachea."
+    },
+    {
+        "item_number": 68,
+        "question": "A 10-year-old child with Type 1 Diabetes Mellitus is participating in a sports camp. The child reports feeling shaky, dizzy, and sweaty. What is the immediate nursing action?",
+        "options": [
+            "Administer 15 grams of a fast-acting carbohydrate source immediately",
+            "Inject regular insulin subcutaneously to lower blood glucose",
+            "Provide a high-fat snack and encourage vigorous exercise",
+            "Wait 30 minutes and recheck blood glucose without treatment"
+        ],
+        "correct_answer": "Administer 15 grams of a fast-acting carbohydrate source immediately",
+        "rationale": "These symptoms indicate hypoglycemia. The rule of 15 applies: give 15 grams of fast-acting carbohydrates (e.g., fruit juice or glucose tablets), recheck blood glucose in 15 minutes, and repeat if needed."
+    },
+    {
+        "item_number": 69,
+        "question": "A nurse is admitting a 6-month-old infant with respiratory syncytial virus (RSV) bronchiolitis. Which infection control precaution must be implemented immediately?",
+        "options": [
+            "Contact and droplet precautions in addition to standard precautions",
+            "Airborne isolation room with negative pressure ventilation",
+            "Protective reverse isolation to shield the infant from visitors",
+            "Standard universal precautions without gown or gloves"
+        ],
+        "correct_answer": "Contact and droplet precautions in addition to standard precautions",
+        "rationale": "RSV spreads primarily through direct contact with respiratory secretions and large droplets, requiring contact and droplet precautions to prevent nosocomial transmission."
+    },
+    {
+        "item_number": 70,
+        "question": "A nurse is evaluating the developmental progress of a 12-month-old infant. Which of the following gross motor milestones should the nurse expect the infant to have attained?",
+        "options": [
+            "Pulling to a standing position and taking steps holding onto furniture",
+            "Running forward effortlessly and climbing stairs independently",
+            "Jumping down from elevated steps with both feet together",
+            "Riding a small tricycle using foot pedals"
+        ],
+        "correct_answer": "Pulling to a standing position and taking steps holding onto furniture",
+        "rationale": "By 12 months of age, infants typically pull themselves up to stand and cruise along furniture, with independent walking emerging around this time."
+    },
+    {
+        "item_number": 71,
+        "question": "An adolescent is diagnosed with acute osteomyelitis of the right femur and is prescribed intravenous antibiotic therapy. Which nursing assessment is most critical during treatment?",
+        "options": [
+            "Monitoring site pain, local swelling, and serial temperature readings",
+            "Measuring hourly urine output and checking visual acuity",
+            "Evaluating deep tendon reflexes and cranial nerve function",
+            "Assessing for jaw necrosis and bleeding gums every shift"
+        ],
+        "correct_answer": "Monitoring site pain, local swelling, and serial temperature readings",
+        "rationale": "Osteomyelitis involves bone infection; monitoring local inflammation, pain intensity, and systemic temperature tracks the therapeutic efficacy of antibiotic therapy."
+    },
+    {
+        "item_number": 72,
+        "question": "A nurse is caring for an infant with a congenital heart defect causing cyanosis. The mother asks why her baby's fingers and toes appear clubbed. What is the nurse's best explanation?",
+        "options": [
+            "Chronic tissue hypoxia stimulates soft tissue and capillary proliferation",
+            "Excessive dietary iron deposition accumulates in the nail beds",
+            "Frequent peripheral vasoconstriction from cold temperatures",
+            "Rapid calcium loss resulting from long-term diuretic therapy"
+        ],
+        "correct_answer": "Chronic tissue hypoxia stimulates soft tissue and capillary proliferation",
+        "rationale": "Clubbing of the fingers and toes is a classic chronic adaptation to prolonged systemic hypoxia and decreased oxygen saturation associated with cyanotic congenital heart defects."
+    },
+    {
+        "item_number": 73,
+        "question": "A 4-year-old child is admitted with suspected idiopathic thrombocytopenic purpura (ITP). Which parental report is most typical for this condition's history?",
+        "options": [
+            "A viral upper respiratory infection occurring 1 to 3 weeks prior",
+            "A history of severe dairy allergy and chronic hives",
+            "Extensive family history of bleeding disorders and hemophilia",
+            "Recent ingestion of toxic household cleaning substances"
+        ],
+        "correct_answer": "A viral upper respiratory infection occurring 1 to 3 weeks prior",
+        "rationale": "Acute ITP in children often follows a benign viral illness (such as a cold or chickenpox) by 1 to 3 weeks, triggering an immune-mediated destruction of platelets."
+    },
+    {
+        "item_number": 74,
+        "question": "A nurse is preparing to administer digoxin elixir to a 3-month-old infant. Which of the following actions is mandatory prior to administration?",
+        "options": [
+            "Auscultate the apical pulse for a full minute and verify against parameter limits",
+            "Check the radial pulse for 30 seconds and multiply by two",
+            "Measure the infant's blood pressure using a neonatal cuff",
+            "Warm the medication solution in a water bath to body temperature"
+        ],
+        "correct_answer": "Auscultate the apical pulse for a full minute and verify against parameter limits",
+        "rationale": "Digoxin toxicity carries high risk in infants. The nurse must auscultate the apical pulse for a full minute, withholding the dose if the heart rate falls below established clinical parameters (typically <90-100 bpm in infants)."
+    },
+    {
+        "item_number": 75,
+        "question": "A school-age child with cystic fibrosis is admitted with a pulmonary infection. Which respiratory therapy order should the nurse schedule before meals?",
+        "options": [
+            "Chest physiotherapy (CPT) and postural drainage",
+            "Continuous nebulized hypertonic saline during meals",
+            "High-flow humidified oxygen mask therapy",
+            "Incentive spirometry exercise every 2 hours"
+        ],
+        "correct_answer": "Chest physiotherapy (CPT) and postural drainage",
+        "rationale": "Chest physiotherapy should be performed before meals or at least an hour after eating to mobilize thick pulmonary secretions and prevent nausea, vomiting, or aspiration during percussion."
+    },
+    {
+        "item_number": 76,
+        "question": "A nurse is assessing a newborn delivered vaginally 6 hours ago. The nurse notes a soft, edematous swelling over the scalp that crosses suture lines. How should the nurse document this finding?",
+        "options": [
+            "Caput succedaneum",
+            "Cephalhematoma",
+            "Subgaleal hemorrhage",
+            "Craniosynostosis"
+        ],
+        "correct_answer": "Caput succedaneum",
+        "rationale": "Caput succedaneum is generalized edema of the soft scalp tissue caused by pressure during labor, characteristically crossing cranial suture lines and resolving spontaneously within days."
+    },
+    {
+        "item_number": 77,
+        "question": "A 2-year-old child is diagnosed with iron deficiency anemia and prescribed liquid ferrous sulfate drops. Which instruction should the nurse give the parents to maximize absorption and prevent staining?",
+        "options": [
+            "Administer drops between meals with citrus juice and have the child drink through a straw",
+            "Mix the iron drops directly into a full bottle of warm cow's milk",
+            "Give the medication immediately after heavy dairy meals with an antacid",
+            "Brush the child's teeth before administration without rinsing"
+        ],
+        "correct_answer": "Administer drops between meals with citrus juice and have the child drink through a straw",
+        "rationale": "Iron absorption is enhanced in an acidic environment (vitamin C/citrus juice) and between meals. Liquid iron stains teeth, so using a dropper or straw and rinsing the mouth is recommended."
+    },
+    {
+        "item_number": 78,
+        "question": "A nurse is caring for an infant with tetralogy of Fallot who experiences an acute hypercyanotic spell. After placing the infant in a knee-chest position, which medication order should the nurse anticipate?",
+        "options": [
+            "Morphine sulfate to suppress the respiratory center and relieve spasms",
+            "Furosemide intravenous push to increase renal blood output",
+            "Digoxin loading dose to improve myocardial contractility",
+            "Atropine sulfate to treat severe reflex bradycardia"
+        ],
+        "correct_answer": "Morphine sulfate to suppress the respiratory center and relieve spasms",
+        "rationale": "Morphine sulfate helps calm the infant and relieve infundibular pulmonary vasospasm during a hypercyanotic spell, improving pulmonary blood flow."
+    },
+    {
+        "item_number": 79,
+        "question": "A nurse is teaching the parents of a child diagnosed with celiac disease. Which food item must be strictly avoided in their child's diet?",
+        "options": [
+            "Wheat bread and barley soup",
+            "Fresh rice and corn tortillas",
+            "Baked potatoes and plain butter",
+            "Fresh eggs and pasteurized milk"
+        ],
+        "correct_answer": "Wheat bread and barley soup",
+        "rationale": "Celiac disease involves an autoimmune intolerance to gluten found in wheat, rye, barley, and non-certified oats. Rice, corn, and potatoes are naturally gluten-free."
+    },
+    {
+        "item_number": 80,
+        "question": "A nurse is evaluating a 6-year-old child admitted with acute post-streptococcal glomerulonephritis (APSGN). Which of the following findings is most characteristic of this disorder?",
+        "options": [
+            "Periorbital edema, dark smoky urine, and hypertension",
+            "Massive frothy proteinuria, hypocalcemia, and hypotension",
+            "Frequent bloody diarrhea and severe dehydration",
+            "High fever, lethargy, and purpuric rash on lower limbs"
+        ],
+        "correct_answer": "Periorbital edema, dark smoky urine, and hypertension",
+        "rationale": "APSGN classic presentation includes periorbital and facial edema, tea-colored or smoky brown hematuria, and hypertension resulting from glomerular inflammation and fluid retention."
+    },
+{
+        "item_number": 81,
+        "question": "A 2-year-old child is brought to the emergency department after swallowing button batteries. Which of the following is the priority intervention?",
+        "options": [
+            "Prepare for immediate endoscopic removal of the battery",
+            "Administer syrup of ipecac to induce rapid vomiting",
+            "Observe at home for spontaneous passage in stools",
+            "Give oral activated charcoal with large volumes of water"
+        ],
+        "correct_answer": "Prepare for immediate endoscopic removal of the battery",
+        "rationale": "Ingested button batteries can cause severe electrical and chemical burns, tissue necrosis, and perforation of the esophagus or GI tract within hours, requiring emergent endoscopic removal."
+    },
+    {
+        "item_number": 82,
+        "question": "A nurse is assessing a newborn and suspects hypothyroidism. Which of the following physical signs is most commonly noted in congenital hypothyroidism?",
+        "options": [
+            "Large posterior fontanel and umbilical hernia",
+            "Extreme restlessness and high-pitched crying",
+            "Tachycardia and excessive sweating",
+            "Premature closure of cranial sutures"
+        ],
+        "correct_answer": "Large posterior fontanel and umbilical hernia",
+        "rationale": "Congenital hypothyroidism is characterized by sluggishness, prolonged physiological jaundice, a large protruding tongue, poor muscle tone, an umbilical hernia, and delayed closure of fontanels."
+    },
+    {
+        "item_number": 83,
+        "question": "A school-age child is admitted with sickle cell anemia experiencing an acute vaso-occlusive crisis. Which of the following nursing orders should be questioned by the nurse?",
+        "options": [
+            "Restrict total daily fluid intake to 500 mL",
+            "Administer prescribed intravenous analgesics around the clock",
+            "Apply warm compresses to painful swollen joints",
+            "Provide supplemental oxygen if oxygen saturation is low"
+        ],
+        "correct_answer": "Restrict total daily fluid intake to 500 mL",
+        "rationale": "Fluid restriction is dangerous in sickle cell crisis because it promotes hemoconcentration and sickling. Aggressive hydration is a cornerstone of management, so fluid restriction orders must be questioned."
+    },
+    {
+        "item_number": 84,
+        "question": "A nurse is caring for an infant diagnosed with Hirschsprung disease. Which of the following diagnostic procedures should the nurse expect to prepare the infant for?",
+        "options": [
+            "Rectal suction biopsy to confirm the absence of ganglion cells",
+            "Upper gastrointestinal barium swallow study",
+            "Magnetic resonance imaging of the brain and spine",
+            "Lumbar puncture for cerebrospinal fluid analysis"
+        ],
+        "correct_answer": "Rectal suction biopsy to confirm the absence of ganglion cells",
+        "rationale": "The definitive diagnostic test for Hirschsprung disease is a rectal suction biopsy, which demonstrates the absence of ganglion cells in the myenteric and submucosal plexuses."
+    },
+    {
+        "item_number": 85,
+        "question": "A 6-year-old child is diagnosed with acute rheumatic fever. Which clinical manifestation is included in the Jones criteria as a major manifestation?",
+        "options": [
+            "Carditis and polyarthritis",
+            "Low-grade fever and arthralgia",
+            "Elevated erythrocyte sedimentation rate",
+            "Prolonged PR interval on electrocardiogram"
+        ],
+        "correct_answer": "Carditis and polyarthritis",
+        "rationale": "The Jones criteria for acute rheumatic fever include major manifestations: carditis, polyarthritis, chorea, erythema marginatum, and subcutaneous nodules."
+    },
+    {
+        "item_number": 86,
+        "question": "A nurse is teaching the parents of a 4-year-old child with newly diagnosed asthma about potential environmental triggers. Which trigger should the parents remove from the home?",
+        "options": [
+            "Upholstered furniture and down feather pillows",
+            "Plastic toys and wooden building blocks",
+            "Cotton bed sheets washed in hot water",
+            "Stainless steel cooking pots and pans"
+        ],
+        "correct_answer": "Upholstered furniture and down feather pillows",
+        "rationale": "Dust mites, animal dander, and feather pillows are common indoor allergens that trigger asthma attacks. Eliminating feather pillows and upholstered items reduces exposure."
+    },
+    {
+        "item_number": 87,
+        "question": "A newborn is admitted to the NICU with a diagnosis of esophageal atresia and tracheoesophageal fistula (EA/TEF). Which preoperative nursing intervention is most vital?",
+        "options": [
+            "Maintain the infant in an upright position with continuous upper pouch suctioning",
+            "Provide frequent small oral feedings of sterile water",
+            "Place the infant flat on the abdomen without suction",
+            "Administer large boluses of intravenous fat emulsion"
+        ],
+        "correct_answer": "Maintain the infant in an upright position with continuous upper pouch suctioning",
+        "rationale": "To prevent aspiration of saliva and gastric secretions into the lungs, infants with EA/TEF are kept head-elevated (30 degrees) with continuous or intermittent suctioning of the upper esophageal pouch."
+    },
+    {
+        "item_number": 88,
+        "question": "A nurse is caring for an adolescent with Type 1 Diabetes Mellitus who is admitted in diabetic ketoacidosis (DKA). Which laboratory finding is characteristic of DKA?",
+        "options": [
+            "Blood glucose level >250 mg/dL and metabolic acidosis",
+            "Blood glucose level <60 mg/dL and metabolic alkalosis",
+            "Serum osmolality <250 mOsm/kg with normal pH",
+            "Undetectable blood ketones and high serum bicarbonate"
+        ],
+        "correct_answer": "Blood glucose level >250 mg/dL and metabolic acidosis",
+        "rationale": "Diabetic ketoacidosis is clinically defined by hyperglycemia (blood glucose >250 mg/dL), ketonemia, ketonuria, and metabolic acidosis (pH <7.3, low bicarbonate)."
+    },
+    {
+        "item_number": 89,
+        "question": "A 3-year-old child is admitted with acute laryngotracheobronchitis (croup). Which of the following clinical features should the nurse assess?",
+        "options": [
+            "Inspriatory stridor, barking cough, and hoarseness",
+            "Sudden high fever, severe drooling, and muffled voice",
+            "Expiratory wheezing, tachypnea, and productive cough",
+            "Painless lower right quadrant tenderness and vomiting"
+        ],
+        "correct_answer": "Inspriatory stridor, barking cough, and hoarseness",
+        "rationale": "Croup is characterized by subglottic edema resulting in a classic barking seal-like cough, inspiratory stridor, and hoarseness, typically following an upper respiratory infection."
+    },
+    {
+        "item_number": 90,
+        "question": "A nurse is assessing a newborn infant 2 hours after delivery. Which finding should be recognized as a normal physiological variation?",
+        "options": [
+            "Erythema toxicum neonatorum over the trunk and extremities",
+            "Jaundice appearing within the first 6 hours of life",
+            "Absence of bowel sounds and persistent abdominal distension",
+            "Fixed non-pulsatile bulging anterior fontanel"
+        ],
+        "correct_answer": "Erythema toxicum neonatorum over the trunk and extremities",
+        "rationale": "Erythema toxicum is a benign, self-limiting transient newborn rash characterized by blotchy red spots with central vesicles that appear during the first days of life."
+    },
+    {
+        "item_number": 91,
+        "question": "A nurse is providing discharge instructions to the parents of a child who underwent surgical correction for intussusception. Which sign of potential recurrence should the nurse teach the parents to report?",
+        "options": [
+            "Sudden episodic abdominal pain, vomiting, and currant jelly stools",
+            "Gradual weight gain and normal daily bowel movements",
+            "Mild low-grade fever lasting for 24 hours post-surgery",
+            "Transient redness around the abdominal incision site"
+        ],
+        "correct_answer": "Sudden episodic abdominal pain, vomiting, and currant jelly stools",
+        "rationale": "Intussusception can recur after reduction. Parents must be taught to watch for signs of recurrence, including acute colicky abdominal pain, vomiting, and bloody mucus stools."
+    },
+    {
+        "item_number": 92,
+        "question": "A school-age child is diagnosed with iron deficiency anemia. The parents ask why the child's stools appear dark green or black. What is the nurse's best response?",
+        "options": [
+            "This is a normal and harmless side effect of oral iron supplementation",
+            "This indicates active gastrointestinal bleeding requiring hospitalization",
+            "This shows that the child is eating too many green leafy vegetables",
+            "This is a sign of an allergic reaction to cow's milk protein"
+        ],
+        "correct_answer": "This is a normal and harmless side effect of oral iron supplementation",
+        "rationale": "Unabsorbed oral iron passes through the gastrointestinal tract and commonly turns stools a harmless dark green or black color."
+    },
+    {
+        "item_number": 93,
+        "question": "A nurse is caring for an infant with a ventriculoperitoneal (VP) shunt placed for hydrocephalus. Which postoperative assessment finding requires immediate notification of the surgeon?",
+        "options": [
+            "Signs of increased intracranial pressure and vomiting",
+            "Soft flat fontanel and stable sleeping pattern",
+            "Mild incision site tenderness managed with oral analgesics",
+            "Normal infant feeding and steady weight gain"
+        ],
+        "correct_answer": "Signs of increased intracranial pressure and vomiting",
+        "rationale": "Vomiting, lethargy, irritability, and a bulging fontanel indicate shunt malfunction or increased intracranial pressure, which is a neurosurgical emergency."
+    },
+    {
+        "item_number": 94,
+        "question": "A nurse is teaching the mother of a 6-month-old infant about introducing solid foods. Which food should be recommended as the first solid food due to its high iron content?",
+        "options": [
+            "Iron-fortified infant rice cereal",
+            "Whole cow's milk and yogurt",
+            "Fresh citrus fruit juices",
+            "Mashed raw carrots and celery"
+        ],
+        "correct_answer": "Iron-fortified infant rice cereal",
+        "rationale": "Iron-fortified single-grain infant cereal is traditionally recommended as a first solid food around 6 months because maternal iron stores become depleted at this age."
+    },
+    {
+        "item_number": 95,
+        "question": "A 10-year-old child is admitted with acute glomerulonephritis. Which of the following historical findings is most relevant to this diagnosis?",
+        "options": [
+            "Recent streptococcal skin infection or pharyngitis 2 weeks ago",
+            "History of severe peanut and shellfish allergy",
+            "Frequent episodes of migraine headaches in the family",
+            "Congenital anomaly of the gastrointestinal tract"
+        ],
+        "correct_answer": "Recent streptococcal skin infection or pharyngitis 2 weeks ago",
+        "rationale": "Acute post-streptococcal glomerulonephritis develops as an immune-complex mediated reaction 1 to 3 weeks following a group A beta-hemolytic streptococcal infection."
+    },
+    {
+        "item_number": 96,
+        "question": "A nurse is assessing an infant with pyloric stenosis. Which of the following clinical findings should the nurse expect?",
+        "options": [
+            "Projectile non-bilious vomiting and visible peristaltic waves",
+            "Bilious vomiting and watery explosive greenish diarrhea",
+            "Painless rectal bleeding and severe abdominal distension",
+            "Constipation and lack of meconium passage at birth"
+        ],
+        "correct_answer": "Projectile non-bilious vomiting and visible peristaltic waves",
+        "rationale": "Pyloric stenosis causes gastric outlet obstruction, manifesting as progressive projectile non-bilious vomiting, visible left-to-right peristaltic waves, and an olive-like mass."
+    },
+    {
+        "item_number": 97,
+        "question": "A nurse is caring for a child diagnosed with acute asthma exacerbation. Which arterial blood gas result indicates early respiratory alkalosis?",
+        "options": [
+            "Increased pH and decreased PaCO2",
+            "Decreased pH and increased PaCO2",
+            "Normal pH and elevated serum bicarbonate",
+            "Decreased pH and decreased PaCO2"
+        ],
+        "correct_answer": "Increased pH and decreased PaCO2",
+        "rationale": "Early in an asthma attack, tachypnea causes hyperventilation, blowing off carbon dioxide and resulting in respiratory alkalosis (high pH, low PaCO2)."
+    },
+    {
+        "item_number": 98,
+        "question": "A 5-year-old child is admitted to the hospital with nephrotic syndrome. Which urinalysis finding is diagnostic for this condition?",
+        "options": [
+            "Heavy proteinuria (3+ to 4+)",
+            "Absence of protein and glucose",
+            "Presence of numerous red blood cell casts",
+            "High concentration of ketones and bilirubin"
+        ],
+        "correct_answer": "Heavy proteinuria (3+ to 4+)",
+        "rationale": "Nephrotic syndrome is characterized by massive glomerular protein loss, resulting in heavy proteinuria (3+ to 4+), hypoalbuminemia, hyperlipidemia, and edema."
+    },
+    {
+        "item_number": 99,
+        "question": "A nurse is planning care for an infant with tetralogy of Fallot. Which clinical manifestation is a hallmark of this congenital heart defect?",
+        "options": [
+            "Cyanosis that increases during crying or exertion",
+            "Hypertension and bounding pulses in upper extremities",
+            "Continuous machinery murmur heard best at the left sternal border",
+            "Massive cardiomegaly and early pulmonary edema"
+        ],
+        "correct_answer": "Cyanosis that increases during crying or exertion",
+        "rationale": "Tetralogy of Fallot features right-to-left shunting, leading to cyanosis ("tet spells") that worsens during episodes of crying, agitation, or physical exertion when pulmonary blood flow drops."
+    },
+    {
+        "item_number": 100,
+        "question": "A nurse is assessing a toddler with suspected intussusception. Which diagnostic and therapeutic procedure is typically performed first?",
+        "options": [
+            "Air or hydrostatic (barium) enema",
+            "Exploratory laparoscopy and bowel resection",
+            "Emergency appendectomy",
+            "Peritoneal dialysis catheter insertion"
+        ],
+        "correct_answer": "Air or hydrostatic (barium) enema",
+        "rationale": "An air or hydrostatic enema performed under fluoroscopy serves as both a diagnostic confirmation and a non-surgical therapeutic reduction for intussusception."
+    },
+{
+        "item_number": 101,
+        "question": "A nurse is caring for an 11-month-old infant who has undergone surgical repair of a cleft palate. Which of the following feeding methods is most appropriate during the immediate postoperative recovery period?",
+        "options": [
+            "Feeding using an open cup or specialized specialized feeder without straws or spoons",
+            "Offering regular infant formula via a standard rubber nipple and bottle",
+            "Using a spoon to feed soft pureed baby foods directly into the back of the mouth",
+            "Allowing the infant to breastfeed ad libitum immediately following extubation"
+        ],
+        "correct_answer": "Feeding using an open cup or specialized specialized feeder without straws or spoons",
+        "rationale": "To protect the delicate suture line on the palate and prevent trauma or disruption, hard utensils, spoons, pacifiers, and straws must be avoided; cup feeding or specialized feeders are used."
+    },
+    {
+        "item_number": 102,
+        "question": "A nurse is admitting a newborn diagnosed with myelomeningocele. Which of the following nursing interventions is critical in preventing complications prior to surgical repair?",
+        "options": [
+            "Cover the sac with a sterile, moist saline dressing and nurse the infant in the prone position",
+            "Apply a firm abdominal binder and place the infant in a supine position",
+            "Clean the neural sac with povidone-iodine solution and leave it open to air",
+            "Perform passive range-of-motion exercises on the lower extremities every 2 hours"
+        ],
+        "correct_answer": "Cover the sac with a sterile, moist saline dressing and nurse the infant in the prone position",
+        "rationale": "The neural defect must be protected from drying and trauma by keeping it covered with sterile moist saline dressings, and the infant is positioned prone to prevent pressure on the sac."
+    },
+    {
+        "item_number": 103,
+        "question": "A 2-year-old toddler is brought to the pediatric clinic with a history of recurrent respiratory infections and foul-smelling, bulky, greasy stools. Which diagnostic test should the nurse anticipate?",
+        "options": [
+            "Sweat chloride test",
+            "Upper gastrointestinal endoscopy",
+            "Barium enema study",
+            "Lumbar puncture"
+        ],
+        "correct_answer": "Sweat chloride test",
+        "rationale": "Bulky, greasy stools (steatorrhea) and recurrent respiratory infections in a toddler are classic signs of cystic fibrosis. The diagnostic standard is the quantitative sweat chloride test."
+    },
+    {
+        "item_number": 104,
+        "question": "A nurse is assessing a school-age child admitted with acute post-streptococcal glomerulonephritis (APSGN). Which of the following findings is most commonly associated with this condition?",
+        "options": [
+            "Tea-colored or smoky brown urine and periorbital edema",
+            "Massive watery diarrhea and severe abdominal cramping",
+            "High fever, lethargy, and a widespread purpuric rash",
+            "Intermittent jaundice and RUQ abdominal tenderness"
+        ],
+        "correct_answer": "Tea-colored or smoky brown urine and periorbital edema",
+        "rationale": "APSGN presents typically with hematuria (giving urine a smoky brown or tea color), periorbital edema, and hypertension resulting from immune complex deposition in the glomeruli."
+    },
+    {
+        "item_number": 105,
+        "question": "An infant with a congenital heart defect is diagnosed with congestive heart failure. Which of the following medications is typically prescribed to improve myocardial contractility?",
+        "options": [
+            "Digoxin",
+            "Furosemide",
+            "Indomethacin",
+            "Spironolactone"
+        ],
+        "correct_answer": "Digoxin",
+        "rationale": "Digoxin is a cardiac glycoside used in pediatric patients with heart failure to increase myocardial contractility and slow the heart rate, improving cardiac output."
+    },
+    {
+        "item_number": 106,
+        "question": "A nurse is planning care for a 4-year-old child admitted in a sickle cell vaso-occlusive crisis. Which of the following interventions takes highest priority?",
+        "options": [
+            "Administering intravenous hydration and prescribed analgesics",
+            "Enforcing strict bed rest and complete fluid restriction",
+            "Applying ice packs directly to painful joints and limbs",
+            "Preparing the child for emergency bone marrow biopsy"
+        ],
+        "correct_answer": "Administering intravenous hydration and prescribed analgesics",
+        "rationale": "Vaso-occlusive crisis causes severe ischemic pain and microvascular sludging. Aggressive hydration (hemodilution) and effective pain relief are the primary pillars of treatment."
+    },
+    {
+        "item_number": 107,
+        "question": "A nurse is caring for an infant diagnosed with respiratory distress syndrome (RDS) receiving mechanical ventilation. Which of the following clinical findings indicates effective surfactant administration?",
+        "options": [
+            "Improvement in oxygen saturation and decreased ventilatory pressure requirements",
+            "Sudden onset of bradycardia and absent breath sounds on the right side",
+            "Increased peak inspiratory pressure and persistent metabolic acidosis",
+            "Complete absence of spontaneous movement and fixed pupils"
+        ],
+        "correct_answer": "Improvement in oxygen saturation and decreased ventilatory pressure requirements",
+        "rationale": "Successful surfactant replacement reduces alveolar surface tension, leading to improved lung compliance, higher oxygen saturations, and the ability to decrease ventilator settings."
+    },
+    {
+        "item_number": 108,
+        "question": "A 6-year-old child is brought to the emergency department after accidentally ingesting kerosene. What is the most important instruction for the nurse to emphasize regarding first aid?",
+        "options": [
+            "Do not induce vomiting under any circumstances due to aspiration risk",
+            "Administer syrup of ipecac immediately at home before transport",
+            "Give large amounts of activated charcoal mixed with tap water",
+            "Force the child to drink vinegar to neutralize the petroleum distillate"
+        ],
+        "correct_answer": "Do not induce vomiting under any circumstances due to aspiration risk",
+        "rationale": "Hydrocarbons (kerosene, furniture polish) cause severe chemical pneumonitis if aspirated. Emesis must never be induced."
+    },
+    {
+        "item_number": 109,
+        "question": "A nurse is assessing a newborn and notes a tuft of hair over the lumbosacral spine. Which underlying congenital anomaly should the nurse suspect?",
+        "options": [
+            "Spina bifida occulta",
+            "Meningocele",
+            "Myelomeningocele",
+            "Encephalocele"
+        ],
+        "correct_answer": "Spina bifida occulta",
+        "rationale": "Spina bifida occulta is a neural tube defect where the vertebral arches fail to fuse without herniation of the spinal cord. It may be marked externally by a dimple, lipoma, or tuft of hair."
+    },
+    {
+        "item_number": 110,
+        "question": "A 3-year-old child is diagnosed with acute lymphoblastic leukemia (ALL) and is receiving induction chemotherapy. Which laboratory value should the nurse monitor most closely for infection risk?",
+        "options": [
+            "Absolute neutrophil count (ANC)",
+            "Total red blood cell count",
+            "Serum blood urea nitrogen",
+            "Partial thromboplastin time"
+        ],
+        "correct_answer": "Absolute neutrophil count (ANC)",
+        "rationale": "Chemotherapy causes bone marrow depression. The absolute neutrophil count (ANC) is the most critical indicator of the child's vulnerability to bacterial and fungal infections."
+    },
+    {
+        "item_number": 111,
+        "question": "A nurse is caring for an infant with suspected pyloric stenosis. Which of the following diagnostic imaging studies is most commonly used for confirmation?",
+        "options": [
+            "Abdominal ultrasound",
+            "Chest X-ray in upright position",
+            "Magnetic resonance cholangiopancreatography",
+            "Barium enema fluoroscopy"
+        ],
+        "correct_answer": "Abdominal ultrasound",
+        "rationale": "Abdominal ultrasound is the non-invasive imaging modality of choice for visualizing the elongated, hypertrophied pyloric muscle in infants with suspected pyloric stenosis."
+    },
+    {
+        "item_number": 112,
+        "question": "A school-age child with Type 1 Diabetes Mellitus is brought to the clinic with nausea, vomiting, lethargy, and a fruity odor to the breath. Which condition should the nurse suspect?",
+        "options": [
+            "Diabetic ketoacidosis (DKA)",
+            "Hypoglycemic shock",
+            "Acute insulin allergy",
+            "Hyperosmolar hyperglycemic state"
+        ],
+        "correct_answer": "Diabetic ketoacidosis (DKA)",
+        "rationale": "Ketoacidosis results from severe insulin deficiency, leading to hyperglycemia, ketosis, metabolic acidosis, dehydration, and acetone breath (fruity odor)."
+    },
+    {
+        "item_number": 113,
+        "question": "A nurse is evaluating a 9-month-old infant's fine motor development. Which of the following should the nurse expect the infant to demonstrate?",
+        "options": [
+            "Pincer grasp using thumb and index finger",
+            "Building a tower of six wooden blocks",
+            "Using a crayon to draw a vertical line",
+            "Copying a circle on unlined paper"
+        ],
+        "correct_answer": "Pincer grasp using thumb and index finger",
+        "rationale": "By 9 to 10 months of age, infants develop a mature pincer grasp, allowing them to pick up small objects using their thumb and index finger."
+    },
+    {
+        "item_number": 114,
+        "question": "A nurse is teaching the parents of a child with cystic fibrosis about the function of pancreatic enzymes. What is the main action of these enzymes?",
+        "options": [
+            "To break down fats, proteins, and carbohydrates for proper absorption",
+            "To clear thick viscous mucus from the lower respiratory bronchioles",
+            "To lower systemic blood pressure and prevent fluid retention",
+            "To stimulate the bone marrow to produce red blood cells"
+        ],
+        "correct_answer": "To break down fats, proteins, and carbohydrates for proper absorption",
+        "rationale": "Pancreatic enzyme replacements contain lipase, protease, and amylase, which substitute for deficient pancreatic secretions to digest fats, proteins, and carbohydrates."
+    },
+    {
+        "item_number": 115,
+        "question": "A newborn is diagnosed with an imperforate anus. Which preoperative nursing assessment is essential when monitoring the infant's urinary output?",
+        "options": [
+            "Checking urine for the presence of meconium to detect a rectourinary fistula",
+            "Measuring specific gravity to ensure high concentration",
+            "Testing for microscopic hematuria due to renal trauma",
+            "Collecting 24-hour urine for total protein excretion"
+        ],
+        "correct_answer": "Checking urine for the presence of meconium to detect a rectourinary fistula",
+        "rationale": "Imperforate anus can be associated with fistulas connecting the rectum to the urethra or vagina, evidenced by meconium passing in the urine."
+    },
+    {
+        "item_number": 116,
+        "question": "A nurse is caring for an adolescent with idiopathic thrombocytopenic purpura (ITP) who has petechiae and ecchymosis. Which activity restriction is appropriate?",
+        "options": [
+            "Avoid contact sports and activities carrying high risk of physical trauma",
+            "Maintain strict bed rest in a darkened room without visitors",
+            "Restrict all weight-bearing physical movement indefinitely",
+            "Prohibit school attendance for the entire academic year"
+        ],
+        "correct_answer": "Avoid contact sports and activities carrying high risk of physical trauma",
+        "rationale": "Because platelets are low in ITP, patients must avoid contact sports and trauma-prone activities to prevent severe internal bleeding or head injury."
+    },
+    {
+        "item_number": 117,
+        "question": "A 2-year-old child is admitted with acute gastroenteritis and severe dehydration. Which of the following clinical findings indicates successful initial rehydration therapy?",
+        "options": [
+            "Moist mucous membranes, moist anterior fontanel, and adequate urine output",
+            "Persistently delayed capillary refill and cool mottled skin",
+            "Continued lethargy and absence of tears when crying",
+            "Marked weight loss and dry skin turgor"
+        ],
+        "correct_answer": "Moist mucous membranes, moist anterior fontanel, and adequate urine output",
+        "rationale": "Indicators of effective rehydration include moist mucous membranes, normal skin turgor, a soft flat (or not sunken) fontanel, and adequate urine output (>1 mL/kg/hr)."
+    },
+    {
+        "item_number": 118,
+        "question": "A nurse is teaching the parents of a child diagnosed with phenylketonuria (PKU) regarding dietary management. Which of the following foods must be strictly limited or avoided?",
+        "options": [
+            "Meat, fish, eggs, dairy products, and artificial sweeteners containing aspartame",
+            "Fresh green vegetables, apples, and rice cereal",
+            "Refined white sugar and clear fruit juices",
+            "Whole grains like corn and barley"
+        ],
+        "correct_answer": "Meat, fish, eggs, dairy products, and artificial sweeteners containing aspartame",
+        "rationale": "PKU requires avoiding high-protein foods rich in phenylalanine (meat, dairy, eggs) as well as aspartame, which breaks down into phenylalanine."
+    },
+    {
+        "item_number": 119,
+        "question": "A nurse is assessing a newborn 1 hour after birth. Which finding should be reported immediately to the healthcare provider?",
+        "options": [
+            "Stridor, excessive oral secretions, and cyanosis during feeding attempts",
+            "A soft, soft caput succedaneum crossing cranial suture lines",
+            "Transient acrocyanosis of the hands and feet",
+            "Passing dark green meconium within 24 hours of birth"
+        ],
+        "correct_answer": "Stridor, excessive oral secretions, and cyanosis during feeding attempts",
+        "rationale": "Excessive drooling, choking, and cyanosis with feeding indicate esophageal atresia and tracheoesophageal fistula, which is a surgical emergency."
+    },
+    {
+        "item_number": 120,
+        "question": "A school-age child is scheduled for a cardiac catheterization. Which of the following nursing interventions is essential in the immediate postoperative period?",
+        "options": [
+            "Keep the affected extremity straight and monitor the insertion site for bleeding",
+            "Encourage the child to ambulate independently within 1 hour post-procedure",
+            "Apply a warm moist heat pack directly over the catheter insertion site",
+            "Restrict all oral fluids for 24 hours to prevent bladder distension"
+        ],
+        "correct_answer": "Keep the affected extremity straight and monitor the insertion site for bleeding",
+        "rationale": "To prevent hemorrhage or hematoma formation at the catheterization site (usually femoral), the extremity must be kept straight for the prescribed period, and frequent pulse/bleeding checks are performed."
+    },
+{
+        "item_number": 121,
+        "question": "A nurse is caring for an infant with a diagnosis of tetralogy of Fallot who suddenly develops deep tachypnea, cyanosis, and restlessness. Which of the following is the priority nursing intervention?",
+        "options": [
+            "Place the infant in a knee-chest position and administer supplemental oxygen",
+            "Place the infant flat in a supine position and encourage vigorous crying",
+            "Administer a rapid intravenous hypotonic fluid bolus",
+            "Prepare the infant for immediate lumbar puncture"
+        ],
+        "correct_answer": "Place the infant in a knee-chest position and administer supplemental oxygen",
+        "rationale": "A hypercyanotic spell (tet spell) is managed by placing the infant in a knee-chest position to increase systemic vascular resistance, administering 100% oxygen, and giving calm reassurance or morphine."
+    },
+    {
+        "item_number": 122,
+        "question": "A 3-year-old child is brought to the emergency department with suspected acute epiglottitis. Which of the following clinical findings should the nurse expect during the initial assessment?",
+        "options": [
+            "Drooling, dysphagia, muffled voice, and sitting in a tripod position",
+            "Barking seal-like cough, inspiratory stridor, and low-grade fever",
+            "Productive cough with rust-colored sputum and pleuritic chest pain",
+            "Painless lower abdominal tenderness and intermittent diarrhea"
+        ],
+        "correct_answer": "Drooling, dysphagia, muffled voice, and sitting in a tripod position",
+        "rationale": "Acute epiglottitis is characterized by the four d's: drooling, dysphagia, dysphonia (muffled voice), and distressed inspiration, accompanied by high fever and a tripod positioning."
+    },
+    {
+        "item_number": 123,
+        "question": "A nurse is teaching the parents of a school-age child with Type 1 Diabetes Mellitus about managing sick-day rules. Which of the following instructions should be included?",
+        "options": [
+            "Check blood glucose levels frequently and test urine for ketones during illness",
+            "Stop insulin administration completely if the child is vomiting and unable to eat",
+            "Restrict fluid intake to prevent severe electrolyte imbalances",
+            "Administer double the usual insulin dose regardless of blood glucose readings"
+        ],
+        "correct_answer": "Check blood glucose levels frequently and test urine for ketones during illness",
+        "rationale": "During illness, stress hormones elevate blood glucose. Parents must check blood glucose more frequently, test for urinary or blood ketones, and never omit insulin doses."
+    },
+    {
+        "item_number": 124,
+        "question": "A nurse is admitting a 6-month-old infant with severe dehydration due to acute gastroenteritis. Which of the following clinical assessments is most reliable for evaluating hydration status in this infant?",
+        "options": [
+            "Measurement of body weight and evaluation of skin turgor and fontanel status",
+            "Assessment of pupillary light reflex and cranial nerve integrity",
+            "Evaluation of deep tendon reflexes in upper and lower extremities",
+            "Measurement of bilateral arm and leg circumference"
+        ],
+        "correct_answer": "Measurement of body weight and evaluation of skin turgor and fontanel status",
+        "rationale": "Percentage of acute weight loss is the most accurate quantitative measure of dehydration severity in infants, complemented by qualitative signs like fontanel depression and skin turgor."
+    },
+    {
+        "item_number": 125,
+        "question": "A 10-year-old child is admitted to the pediatric unit with acute rheumatic fever. Which of the following clinical findings supports this diagnosis?",
+        "options": [
+            "Polyarthritis, carditis, and subcutaneous nodules",
+            "Microcytic anemia and profound thrombocytopenia",
+            "Massive proteinuria and severe hypercholesterolemia",
+            "Projectile vomiting and an olive-shaped epigastric mass"
+        ],
+        "correct_answer": "Polyarthritis, carditis, and subcutaneous nodules",
+        "rationale": "Acute rheumatic fever is diagnosed using the Jones criteria, which feature major manifestations including carditis, polyarthritis, chorea, erythema marginatum, and subcutaneous nodules."
+    },
+    {
+        "item_number": 126,
+        "question": "A nurse is assessing a newborn 2 hours after vaginal delivery. Which of the following findings requires immediate notification of the pediatrician?",
+        "options": [
+            "Absence of spontaneous voiding and meconium passage within 24 hours of birth",
+            "A soft caput succedaneum crossing the cranial suture lines",
+            "Erythema toxicum neonatorum scattered over the trunk",
+            "Mild acrocyanosis of the hands and feet lasting 2 hours"
+        ],
+        "correct_answer": "Absence of spontaneous voiding and meconium passage within 24 hours of birth",
+        "rationale": "Newborns should pass their first meconium and urine within 24 hours of birth; failure to do so warrants evaluation for anomalies such as imperforate anus or renal obstruction."
+    },
+    {
+        "item_number": 127,
+        "question": "A nurse is caring for an infant diagnosed with patent ductus arteriosus (PDA). Which of the following clinical manifestations is characteristically associated with this defect?",
+        "options": [
+            "Bounding peripheral pulses and a continuous machinery-like murmur",
+            "Marked cyanosis that worsens with crying or feeding",
+            "Unequal blood pressure between upper and lower extremities",
+            "Distant heart sounds and pericardial friction rub"
+        ],
+        "correct_answer": "Bounding peripheral pulses and a continuous machinery-like murmur",
+        "rationale": "A patent ductus arteriosus causes left-to-right shunting from the aorta to the pulmonary artery, producing bounding pulses and a classic continuous machinery murmur."
+    },
+    {
+        "item_number": 128,
+        "question": "A nurse is preparing to administer an intramuscular injection to a toddler. Which of the following is the preferred anatomical injection site?",
+        "options": [
+            "Vastus lateralis muscle",
+            "Dorsogluteal muscle",
+            "Deltoid muscle",
+            "Rectus femoris muscle"
+        ],
+        "correct_answer": "Vastus lateralis muscle",
+        "rationale": "The vastus lateralis muscle is the recommended, safest site for intramuscular injections in infants and toddlers due to its well-developed muscle mass and lack of major nerves or blood vessels."
+    },
+    {
+        "item_number": 129,
+        "question": "A 4-year-old child is admitted with nephrotic syndrome and severe generalized edema. Which dietary modification should the nurse anticipate in the care plan?",
+        "options": [
+            "No added salt (sodium restriction) and moderate protein intake",
+            "Strict fluid restriction combined with high-sodium intake",
+            "High-protein diet with unrestricted table salt",
+            "Complete elimination of all dietary fats and carbohydrates"
+        ],
+        "correct_answer": "No added salt (sodium restriction) and moderate protein intake",
+        "rationale": "Management of nephrotic syndrome includes a no-added-salt diet to control edema and hypertension, alongside normal or moderate protein intake to support growth without worsening proteinuria."
+    },
+    {
+        "item_number": 130,
+        "question": "A nurse is teaching the parents of a child with cystic fibrosis about administering prescribed fat-soluble vitamins. Which vitamins should be included?",
+        "options": [
+            "Vitamins A, D, E, and K",
+            "Vitamins B1, B6, B12, and C",
+            "Folic acid and niacin",
+            "Biotin and pantothenic acid"
+        ],
+        "correct_answer": "Vitamins A, D, E, and K",
+        "rationale": "Fat malabsorption in cystic fibrosis leads to deficiencies in fat-soluble vitamins (A, D, E, and K), requiring daily water-miscible supplementation."
+    },
+    {
+        "item_number": 131,
+        "question": "A nurse is assessing a newborn and notes a unilateral cephalohematoma over the parietal bone. Which of the following statements is correct regarding this condition?",
+        "options": [
+            "It does not cross suture lines and is caused by subperiosteal hemorrhage",
+            "It is generalized edema of the scalp that crosses suture lines",
+            "It requires immediate surgical drainage within 12 hours of birth",
+            "It is an indicator of severe underlying intracranial hemorrhage"
+        ],
+        "correct_answer": "It does not cross suture lines and is caused by subperiosteal hemorrhage",
+        "rationale": "A cephalohematoma is a collection of blood between the skull bone and its periosteum, caused by birth trauma; it is bound by suture lines and resolves over weeks."
+    },
+    {
+        "item_number": 132,
+        "question": "An infant is diagnosed with Hirschsprung disease. Which of the following preoperative nursing interventions is most important?",
+        "options": [
+            "Administering saline enemas and monitoring for bowel cleansing and decompression",
+            "Encouraging high-fiber solid foods to stimulate peristalsis",
+            "Administering high-dose loperamide to stop diarrhea",
+            "Applying continuous abdominal pressure to relieve flatus"
+        ],
+        "correct_answer": "Administering saline enemas and monitoring for bowel cleansing and decompression",
+        "rationale": "Preoperative care for Hirschsprung disease involves bowel preparation using saline enemas to decompress the aganglionic bowel and prevent enterocolitis."
+    },
+    {
+        "item_number": 133,
+        "question": "A nurse is caring for an adolescent diagnosed with iron deficiency anemia. Which laboratory result is consistent with this diagnosis?",
+        "options": [
+            "Low hemoglobin, low hematocrit, and microcytic hypochromic red blood cells",
+            "Elevated hemoglobin, high white blood cell count, and macrocytic cells",
+            "Normal hemoglobin with severe thrombocytopenia and prolonged PT",
+            "Elevated serum iron and decreased total iron-binding capacity"
+        ],
+        "correct_answer": "Low hemoglobin, low hematocrit, and microcytic hypochromic red blood cells",
+        "rationale": "Iron deficiency anemia presents with depressed hemoglobin and hematocrit values, with erythrocytes appearing microcytic (small) and hypochromic (pale)."
+    },
+    {
+        "item_number": 134,
+        "question": "A 5-year-old child is scheduled for a cardiac catheterization. Which of the following nursing assessments is critical immediately upon return to the nursing unit?",
+        "options": [
+            "Assess distal pulses, capillary refill, and insertion site integrity frequently",
+            "Encourage the child to jump and run to restore lower extremity circulation",
+            "Apply hot moist compresses to the femoral insertion site",
+            "Remove all pressure dressings immediately after arrival"
+        ],
+        "correct_answer": "Assess distal pulses, capillary refill, and insertion site integrity frequently",
+        "rationale": "Monitoring vascular status (distal pulses, warmth, color, capillary refill) and checking the insertion site for hemorrhage or hematoma is critical following cardiac catheterization."
+    },
+    {
+        "item_number": 135,
+        "question": "A nurse is teaching the mother of a 6-month-old infant about infant safety and injury prevention. Which of the following statements indicates the mother understands the teaching?",
+        "options": [
+            "I will place my baby to sleep on his back on a firm mattress without loose blankets",
+            "I can leave my baby unattended on an elevated changing table for a few seconds",
+            "I will prop my baby's bottle with a small pillow during nighttime feedings",
+            "I can allow my baby to play with small plastic toys containing removable parts"
+        ],
+        "correct_answer": "I will place my baby to sleep on his back on a firm mattress without loose blankets",
+        "rationale": "Safe sleep guidelines (back to sleep, firm surface, no loose bedding) are essential to prevent sudden infant death syndrome (SIDS)."
+    },
+    {
+        "item_number": 136,
+        "question": "A nurse is caring for an infant with acute gastroenteritis and severe dehydration. Which of the following acid-base imbalances should the nurse expect?",
+        "options": [
+            "Metabolic acidosis",
+            "Metabolic alkalosis",
+            "Respiratory acidosis",
+            "Respiratory alkalosis"
+        ],
+        "correct_answer": "Metabolic acidosis",
+        "rationale": "Severe diarrhea and loss of bicarbonate-rich intestinal fluids in acute gastroenteritis commonly lead to metabolic acidosis."
+    },
+    {
+        "item_number": 137,
+        "question": "A school-age child is admitted with acute post-streptococcal glomerulonephritis (APSGN). Which of the following is the primary goal of nursing care?",
+        "options": [
+            "Monitor blood pressure and manage fluid balance to prevent complications",
+            "Administer high-dose iron supplements and encourage red meat intake",
+            "Provide a high-sodium diet to replace renal electrolyte losses",
+            "Encourage vigorous daily aerobic exercise to improve circulation"
+        ],
+        "correct_answer": "Monitor blood pressure and manage fluid balance to prevent complications",
+        "rationale": "Due to impaired glomerular filtration, children with APSGN are at high risk for fluid overload and acute hypertension; monitoring BP and fluid balance is paramount."
+    },
+    {
+        "item_number": 138,
+        "question": "A nurse is assessing a toddler with intussusception. Which of the following findings is classic for this condition?",
+        "options": [
+            "Current jelly stools mixed with blood and mucus",
+            "Bright red rectal bleeding with painless bowel movements",
+            "Pale yellow watery stools lacking bile pigment",
+            "Hard, dry pellet-like stools accompanied by constipation"
+        ],
+        "correct_answer": "Current jelly stools mixed with blood and mucus",
+        "rationale": "Intussusception causes vascular compromise of the bowel, leading to mucosal sloughing and the passage of characteristic currant jelly stools."
+    },
+    {
+        "item_number": 139,
+        "question": "A nurse is teaching the parents of a child diagnosed with phenylketonuria (PKU). Which of the following statements by the parents indicates correct understanding?",
+        "options": [
+            "We must avoid foods high in protein such as meat, milk, and eggs",
+            "Our child can eat as many dairy products and nuts as desired",
+            "PKU is a temporary condition that will disappear by adolescence",
+            "We only need to restrict sugar and simple carbohydrates"
+        ],
+        "correct_answer": "We must avoid foods high in protein such as meat, milk, and eggs",
+        "rationale": "Phenylketonuria requires lifelong dietary restriction of phenylalanine-rich foods (meat, dairy, eggs) to prevent intellectual disability and neurological damage."
+    },
+    {
+        "item_number": 140,
+        "question": "A nurse is caring for an adolescent with idiopathic thrombocytopenic purpura (ITP) who has a platelet count of 15,000/mcL. Which of the following orders should the nurse question?",
+        "options": [
+            "Perform intramuscular injections for routine immunizations",
+            "Administer prescribed intravenous immunoglobulin (IVIG)",
+            "Provide a soft-bristled toothbrush for oral hygiene",
+            "Monitor neurological status and check for petechiae every shift"
+        ],
+        "correct_answer": "Perform intramuscular injections for routine immunizations",
+        "rationale": "With severe thrombocytopenia (15,000/mcL), intramuscular injections pose an extreme risk of hematoma formation and bleeding. IM injections should be avoided or questioned."
+    },
+{
+        "item_number": 141,
+        "question": "A nurse is caring for an infant with a congenital heart defect. Which of the following clinical findings is most characteristic of cyanotic heart defects such as tetralogy of Fallot?",
+        "options": [
+            "Clubbing of the fingers and toes due to chronic hypoxemia",
+            "Bounding peripheral pulses and widened pulse pressure",
+            "Marked systemic hypertension and upper extremity flushing",
+            "Hepatomegaly and dependent pitting edema of the lower back"
+        ],
+        "correct_answer": "Clubbing of the fingers and toes due to chronic hypoxemia",
+        "rationale": "Chronic tissue hypoxia resulting from right-to-left shunting in cyanotic congenital heart defects leads to compensatory clubbing of the nail beds in fingers and toes."
+    },
+    {
+        "item_number": 142,
+        "question": "A school-age child is admitted to the pediatric unit with suspected acute appendicitis. Which of the following diagnostic signs is commonly associated with peritoneal irritation?",
+        "options": [
+            "Rebound tenderness at McBurney's point",
+            "Positive Ortolani click during hip movement",
+            "Ecchymosis around the umbilical region",
+            "Inability to extend the right knee fully"
+        ],
+        "correct_answer": "Rebound tenderness at McBurney's point",
+        "rationale": "Rebound tenderness and pain localized at McBurney's point in the right lower quadrant are hallmark clinical indicators of acute appendicitis and peritoneal inflammation."
+    },
+    {
+        "item_number": 143,
+        "question": "A nurse is planning care for an infant with respiratory syncytial virus (RSV) bronchiolitis. Which of the following interventions is primary in managing this condition?",
+        "options": [
+            "Maintaining adequate hydration and humidified oxygen therapy",
+            "Administering prophylactic broad-spectrum oral antivirals",
+            "Encouraging high-calorie oral feeds and strict fluid restriction",
+            "Performing aggressive chest physiotherapy every two hours"
+        ],
+        "correct_answer": "Maintaining adequate hydration and humidified oxygen therapy",
+        "rationale": "Management of RSV bronchiolitis is primarily supportive, focusing on respiratory support (humidified oxygen), hydration, and airway clearance via suctioning."
+    },
+    {
+        "item_number": 144,
+        "question": "A 3-year-old child is brought to the clinic for a routine well-child checkup. Which of the following developmental milestones should the nurse expect the child to have attained?",
+        "options": [
+            "Riding a tricycle and dressing with minimal assistance",
+            "Copying a complex diamond shape and tying shoelaces",
+            "Reading simple picture books and writing full sentences",
+            "Using a spoon and fork independently with no spilling"
+        ],
+        "correct_answer": "Riding a tricycle and dressing with minimal assistance",
+        "rationale": "By 3 years of age, toddlers demonstrate gross and fine motor skills such as riding a tricycle, jumping, and helping dress themselves with minimal supervision."
+    },
+    {
+        "item_number": 145,
+        "question": "An adolescent is admitted in diabetic ketoacidosis (DKA). Which of the following intravenous medications should the nurse expect to administer after initial fluid resuscitation?",
+        "options": [
+            "Regular insulin continuous intravenous infusion",
+            "NPH intermediate-acting insulin subcutaneous injection",
+            "Glucagon intramuscular rescue injection",
+            "Dextrose 50% intravenous bolus"
+        ],
+        "correct_answer": "Regular insulin continuous intravenous infusion",
+        "rationale": "Management of DKA requires a continuous IV infusion of regular insulin to lower blood glucose gradually and halt ketone production, following initial fluid resuscitation."
+    },
+    {
+        "item_number": 146,
+        "question": "A nurse is teaching the parents of an infant with gastroesophageal reflux (GER). Which of the following positioning instructions should the nurse give?",
+        "options": [
+            "Keep the infant upright for 30 minutes after feedings",
+            "Place the infant prone with head elevated 45 degrees for sleep",
+            "Position the infant flat on the right side immediately after meals",
+            "Keep the infant in a Trendelenburg position during nap times"
+        ],
+        "correct_answer": "Keep the infant upright for 30 minutes after feedings",
+        "rationale": "Keeping infants upright following feedings utilizes gravity to reduce reflux episodes; prone positioning during sleep is avoided due to SIDS risk unless medically mandated."
+    },
+    {
+        "item_number": 147,
+        "question": "A newborn is diagnosed with congenital hip dysplasia and placed in a Pavlik harness. Which of the following instructions should the nurse provide to the parents?",
+        "options": [
+            "Check skin folds daily for redness or irritation under the harness straps",
+            "Remove the harness completely during bath time and diaper changes",
+            "Apply lotion and powder liberally beneath all straps to prevent chafing",
+            "Adjust the tension of the chest and leg straps weekly as the infant grows"
+        ],
+        "correct_answer": "Check skin folds daily for redness or irritation under the harness straps",
+        "rationale": "Parents must check skin folds daily for signs of irritation while keeping the harness on continuously as prescribed; strap adjustments and removal are managed by the orthopedist."
+    },
+    {
+        "item_number": 148,
+        "question": "A nurse is assessing a child with suspected iron deficiency anemia. Which of the following clinical manifestations is frequently observed?",
+        "options": [
+            "Pallor, fatigue, and decreased exercise tolerance",
+            "Hyperactivity, restlessness, and excessive weight gain",
+            "Flushed warm skin, bounding pulses, and hypertension",
+            "Rapid resting heart rate with prominent tremors"
+        ],
+        "correct_answer": "Pallor, fatigue, and decreased exercise tolerance",
+        "rationale": "Iron deficiency anemia reduces oxygen-carrying capacity, resulting in classic clinical manifestations of pallor, generalized fatigue, lethargy, and decreased tolerance for exertion."
+    },
+    {
+        "item_number": 149,
+        "question": "A nurse is caring for an infant with a ventriculoperitoneal shunt for hydrocephalus. Which of the following postoperative signs suggests a malfunctioning shunt?",
+        "options": [
+            "Irritability, vomiting, and a bulging anterior fontanel",
+            "Soft flat fontanel and steady weight gain",
+            "Stable body temperature and clear breath sounds",
+            "Bilateral symmetrical pupils reacting briskly to light"
+        ],
+        "correct_answer": "Irritability, vomiting, and a bulging anterior fontanel",
+        "rationale": "Shunt malfunction leads to cerebrospinal fluid accumulation and rising intracranial pressure, manifested by irritability, vomiting, lethargy, and a tense, bulging fontanel."
+    },
+    {
+        "item_number": 150,
+        "question": "A 6-year-old child is scheduled for a tonsillectomy. Which of the following postoperative findings requires immediate nursing intervention?",
+        "options": [
+            "Frequent swallowing and clearing of the throat",
+            "Requesting small sips of ice water or clear broth",
+            "Low-grade temperature of 38.0°C (100.4°F) on day one",
+            "Complaints of mild sore throat and referred ear pain"
+        ],
+        "correct_answer": "Frequent swallowing and clearing of the throat",
+        "rationale": "Frequent swallowing while resting or sleeping indicates continuous trickling of fresh blood from the surgical site, signaling post-tonsillectomy hemorrhage."
+    },
+    {
+        "item_number": 151,
+        "question": "A nurse is teaching the parents of an infant with cystic fibrosis about dietary requirements. Which of the following diets should be recommended?",
+        "options": [
+            "High-calorie, high-protein diet with unrestricted fat intake",
+            "Low-sodium, fat-restricted diet with low caloric density",
+            "Strict vegetarian diet eliminating all animal proteins",
+            "High-carbohydrate, fluid-restricted diet with zero fats"
+        ],
+        "correct_answer": "High-calorie, high-protein diet with unrestricted fat intake",
+        "rationale": "Due to malabsorption and high metabolic demands, children with cystic fibrosis require a high-calorie, high-protein diet paired with pancreatic enzymes to ensure proper growth."
+    },
+    {
+        "item_number": 152,
+        "question": "A newborn infant is admitted with suspected tracheoesophageal fistula (TEF). Which of the following initial nursing actions is essential?",
+        "options": [
+            "Stop oral intake immediately and maintain upper pouch suctioning",
+            "Initiate immediate breastfeeding to comfort the infant",
+            "Feed the infant sterile glucose water in small increments",
+            "Place the infant flat on the back without airway suction"
+        ],
+        "correct_answer": "Stop oral intake immediately and maintain upper pouch suctioning",
+        "rationale": "To prevent aspiration pneumonia in TEF, oral feeds must be withheld immediately and continuous or intermittent suctioning of the blind esophageal pouch must be instituted."
+    },
+    {
+        "item_number": 153,
+        "question": "A nurse is planning care for an adolescent with acute osteomyelitis. Which of the following is the primary therapeutic intervention?",
+        "options": [
+            "Long-term intravenous antibiotic therapy",
+            "Immediate surgical amputation of the limb",
+            "Continuous local cold pack application",
+            "Strict fluid restriction and bed rest"
+        ],
+        "correct_answer": "Long-term intravenous antibiotic therapy",
+        "rationale": "Acute osteomyelitis is treated primarily with prolonged targeted intravenous antibiotic therapy (often lasting 4 to 6 weeks) to eradicate the bone infection."
+    },
+    {
+        "item_number": 154,
+        "question": "A 3-year-old child is admitted with acute laryngotracheobronchitis (croup). Which of the following interventions should the nurse anticipate?",
+        "options": [
+            "Administering nebulized epinephrine and oral dexamethasone",
+            "Preparing for immediate emergency endotracheal intubation",
+            "Administering prophylactic high-dose oral antitussives",
+            "Encouraging hot steam inhalation in a closed room"
+        ],
+        "correct_answer": "Administering nebulized epinephrine and oral dexamethasone",
+        "rationale": "Moderate to severe croup is managed with corticosteroids to reduce airway edema and nebulized racemic epinephrine for rapid mucosal vasoconstriction and relief of stridor."
+    },
+    {
+        "item_number": 155,
+        "question": "A nurse is assessing a newborn 6 hours after birth. Which of the following skin findings should be documented as a normal variation?",
+        "options": [
+            "Mongolian spots over the lumbosacral region",
+            "Generalized petechiae across the face and chest",
+            "Jaundice visible over the palms and soles",
+            "Deep second-degree burn blisters on the limbs"
+        ],
+        "correct_answer": "Mongolian spots over the lumbosacral region",
+        "rationale": "Mongolian spots are benign, flat congenital blue-gray pigmentation patches commonly seen over the lower back and buttocks in infants of color, fading over time."
+    },
+    {
+        "item_number": 156,
+        "question": "A nurse is caring for a child diagnosed with nephrotic syndrome. Which of the following laboratory values is expected?",
+        "options": [
+            "Hypoalbuminemia and severe hyperlipidemia",
+            "Hyperalbuminemia and severe hypolipidemia",
+            "Elevated serum sodium and decreased hematocrit",
+            "Normal serum proteins with positive blood cultures"
+        ],
+        "correct_answer": "Hypoalbuminemia and severe hyperlipidemia",
+        "rationale": "Nephrotic syndrome features massive urinary protein loss, resulting in hypoalbuminemia, compensatory hepatic hyperlipidemia, edema, and heavy proteinuria."
+    },
+    {
+        "item_number": 157,
+        "question": "A 10-year-old child is admitted with sickle cell crisis. Which of the following interventions should be included in the nursing care plan?",
+        "options": [
+            "Promoting adequate hydration and administering prescribed analgesics",
+            "Restricting oral fluid intake and encouraging cold exposure",
+            "Applying cold ice packs to relieve joint inflammation",
+            "Administering high-dose iron dextran intramuscularly"
+        ],
+        "correct_answer": "Promoting adequate hydration and administering prescribed analgesics",
+        "rationale": "Management of sickle cell crisis centers on aggressive pain control and hydration to reverse hypoxia, reduce blood viscosity, and prevent further sickling."
+    },
+    {
+        "item_number": 158,
+        "question": "A nurse is teaching the mother of a toddler with celiac disease. Which of the following grain products must be permanently eliminated from the diet?",
+        "options": [
+            "Wheat, rye, and barley",
+            "Rice, corn, and millet",
+            "Tapioca and arrowroot",
+            "Quinoa and buckwheat"
+        ],
+        "correct_answer": "Wheat, rye, and barley",
+        "rationale": "Celiac enteropathy requires strict lifelong elimination of gluten-containing grains: wheat, rye, barley, and non-pure oats."
+    },
+    {
+        "item_number": 159,
+        "question": "A nurse is assessing an infant with pyloric stenosis. Which of the following physical examination findings is characteristic?",
+        "options": [
+            "A movable, olive-shaped mass in the epigastric region",
+            "Right lower quadrant tenderness with guarding",
+            "A scaphoid abdomen with absent bowel sounds",
+            "Palpable bilateral kidney enlargement"
+        ],
+        "correct_answer": "A movable, olive-shaped mass in the epigastric region",
+        "rationale": "Hypertrophic pyloric stenosis classically presents with projectile vomiting and a palpable, firm, olive-shaped mass in the upper right quadrant or epigastrium."
+    },
+    {
+        "item_number": 160,
+        "question": "A nurse is caring for an adolescent with Type 1 Diabetes Mellitus. Which of the following symptoms suggests hypoglycemia requiring immediate treatment?",
+        "options": [
+            "Shakiness, sweating, tachycardia, and dizziness",
+            "Kussmaul respirations, fruity breath, and lethargy",
+            "Hypertension, flushed skin, and polyuria",
+            "Extreme thirst, nausea, and abdominal pain"
+        ],
+        "correct_answer": "Shakiness, sweating, tachycardia, and dizziness",
+        "rationale": "Hypoglycemia triggers adrenergic and neuroglycopenic symptoms, including tremors, diaphoresis, tachycardia, anxiety, dizziness, and confusion."
+    },
+{
+        "item_number": 161,
+        "question": "A nurse is caring for an infant with a ventriculoperitoneal shunt. Which of the following clinical findings indicates a shunt infection and requires immediate reporting?",
+        "options": [
+            "Fever, lethargy, and redness along the shunt tract",
+            "Soft, flat anterior fontanel and normal feeding",
+            "Stable temperature and steady weight gain",
+            "Clear breath sounds and equal bilateral grip strength"
+        ],
+        "correct_answer": "Fever, lethargy, and redness along the shunt tract",
+        "rationale": "Shunt infections typically manifest with fever, irritability, lethargy, and localized erythema or tenderness along the subcutaneous shunt pathway, requiring urgent medical intervention."
+    },
+    {
+        "item_number": 162,
+        "question": "A school-age child is admitted with acute rheumatic fever. Which of the following nursing interventions is most appropriate during the acute phase of joint inflammation?",
+        "options": [
+            "Apply cold compresses and administer prescribed anti-inflammatory agents",
+            "Encourage active range of motion exercises every 2 hours",
+            "Apply direct heat packs and massage the affected joints vigorously",
+            "Encourage the child to ambulate independently in the hallway"
+        ],
+        "correct_answer": "Apply cold compresses and administer prescribed anti-inflammatory agents",
+        "rationale": "Polyarthritis in acute rheumatic fever causes severe joint pain and swelling; applying cold compresses and administering prescribed anti-inflammatory medications (aspirin or corticosteroids) relieves acute discomfort."
+    },
+    {
+        "item_number": 163,
+        "question": "A nurse is teaching the mother of a newborn about prevention of sudden infant death syndrome (SIDS). Which of the following sleeping positions should the nurse recommend?",
+        "options": [
+            "Supine position on a firm mattress without pillows or soft toys",
+            "Prone position with a soft fleece blanket underneath",
+            "Lateral position propped securely with rolled-up towels",
+            "Semi-upright position in an infant car seat placed in the crib"
+        ],
+        "correct_answer": "Supine position on a firm mattress without pillows or soft toys",
+        "rationale": "The American Academy of Pediatrics recommends placing infants strictly in the supine position on a firm, flat mattress for every sleep period to minimize SIDS risk."
+    },
+    {
+        "item_number": 164,
+        "question": "An infant is admitted with Hirschsprung disease. Which of the following dietary and elimination findings is typically reported in the history?",
+        "options": [
+            "Delayed passage of meconium and chronic foul-smelling constipation",
+            "Projectile non-bilious vomiting after every feeding",
+            "Massive watery diarrhea accompanied by high fever",
+            "Passing of bright red blood per rectum with normal stools"
+        ],
+        "correct_answer": "Delayed passage of meconium and chronic foul-smelling constipation",
+        "rationale": "Hirschsprung disease involves aganglionic bowel segments leading to inability to pass stool, failure to pass meconium within 48 hours, and ribbon-like foul stools."
+    },
+    {
+        "item_number": 165,
+        "question": "A nurse is assessing an adolescent with acute osteomyelitis of the tibia. Which of the following laboratory findings should the nurse expect?",
+        "options": [
+            "Elevated white blood cell count and erythrocyte sedimentation rate (ESR)",
+            "Decreased white blood cells and normal inflammatory markers",
+            "Elevated platelet count combined with severe hypoglycemia",
+            "Normal erythrocyte sedimentation rate and low serum calcium"
+        ],
+        "correct_answer": "Elevated white blood cell count and erythrocyte sedimentation rate (ESR)",
+        "rationale": "Acute bone infection triggers a systemic inflammatory response, resulting in leukocytosis and significantly elevated acute-phase reactants like ESR and C-reactive protein."
+    },
+    {
+        "item_number": 166,
+        "question": "A 3-year-old child is brought to the emergency department after ingesting household bleach. Which of the following is the priority nursing action?",
+        "options": [
+            "Maintain airway patency and prepare for diagnostic endoscopy",
+            "Induce emesis immediately using concentrated salt water",
+            "Administer activated charcoal with high-volume fluid flushes",
+            "Neutralize the bleach by administering large volumes of vinegar"
+        ],
+        "correct_answer": "Maintain airway patency and prepare for diagnostic endoscopy",
+        "rationale": "Ingesting corrosive alkaline substances like bleach causes severe mucosal burns; vomiting must not be induced, and priority centers on airway stabilization and endoscopic evaluation."
+    },
+    {
+        "item_number": 167,
+        "question": "A nurse is caring for an infant diagnosed with tetralogy of Fallot who experiences a hypercyanotic spell. Which of the following pharmacological agents may be ordered to reduce pulmonary vascular spasm?",
+        "options": [
+            "Morphine sulfate",
+            "Furosemide diuretic",
+            "Digoxin glycoside",
+            "Atropine sulfate"
+        ],
+        "correct_answer": "Morphine sulfate",
+        "rationale": "Morphine sulfate relieves infundibular spasms and calms the infant during a tet spell, reducing right-to-left shunting and improving systemic oxygenation."
+    },
+    {
+        "item_number": 168,
+        "question": "A school-age child is diagnosed with iron deficiency anemia. Which of the following symptoms is most indicative of chronic anemia?",
+        "options": [
+            "Fatigue, pale conjunctivae, and spoon-shaped brittle fingernails",
+            "Flushed skin, hyperactivity, and excessive weight gain",
+            "Hypertension, bounding pulses, and frequent nosebleeds",
+            "Rapid resting heart rate with prominent tremors and sweating"
+        ],
+        "correct_answer": "Fatigue, pale conjunctivae, and spoon-shaped brittle fingernails",
+        "rationale": "Chronic iron deficiency anemia leads to generalized fatigue, pallor of mucous membranes, and koilonychia (spoon-shaped, brittle fingernails)."
+    },
+    {
+        "item_number": 169,
+        "question": "A nurse is preparing to administer an oral medication to a 10-month-old infant. Which of the following techniques ensures safe administration?",
+        "options": [
+            "Use an oral syringe to direct medication toward the side of the infant's mouth in small amounts",
+            "Mix the entire medication dose into a large bottle of formula for daytime feeding",
+            "Administer the medication quickly via an open cup while the infant lies flat",
+            "Pry the infant's jaw open with a tongue depressor to drop pills directly down the throat"
+        ],
+        "correct_answer": "Use an oral syringe to direct medication toward the side of the infant's mouth in small amounts",
+        "rationale": "Using an oral syringe directed into the side of the mouth in small increments prevents aspiration and ensures the infant swallows the full dose."
+    },
+    {
+        "item_number": 170,
+        "question": "A newborn infant is admitted with esophageal atresia without tracheoesophageal fistula. Which of the following clinical findings should the nurse expect?",
+        "options": [
+            "Inability to pass a nasogastric tube and excessive drooling of saliva",
+            "Massive abdominal distension and projectile bilious vomiting",
+            "Severe respiratory distress accompanied by meconium aspiration",
+            "Passage of meconium-stained urine and hematuria"
+        ],
+        "correct_answer": "Inability to pass a nasogastric tube and excessive drooling of saliva",
+        "rationale": "Esophageal atresia presents with a blind upper pouch, causing excessive drooling, inability to feed, choking/coughing, and failure to pass a nasogastric tube into the stomach."
+    },
+    {
+        "item_number": 171,
+        "question": "A nurse is teaching the parents of a child with cystic fibrosis about administering pancreatic enzymes. When is the most appropriate time to give these capsules?",
+        "options": [
+            "Immediately before or with every meal and snack",
+            "One hour after finishing meals and snacks",
+            "Once daily in the morning on an empty stomach",
+            "Only at bedtime prior to sleeping"
+        ],
+        "correct_answer": "Immediately before or with every meal and snack",
+        "rationale": "Pancreatic enzymes must be administered with meals and snacks so they mix with food to digest fats, proteins, and carbohydrates effectively."
+    },
+    {
+        "item_number": 172,
+        "question": "A 4-year-old child is admitted with acute glomerulonephritis. Which of the following nursing assessments is essential?",
+        "options": [
+            "Monitoring blood pressure every 4 hours and recording daily weights",
+            "Testing urine for glucose and specific gravity every 30 minutes",
+            "Encouraging high fluid loading to flush renal glomeruli",
+            "Administering prescribed high-dose potassium supplements"
+        ],
+        "correct_answer": "Monitoring blood pressure every 4 hours and recording daily weights",
+        "rationale": "Glomerular inflammation leads to sodium and water retention, causing hypertension and edema; frequent blood pressure monitoring and precise daily weights are vital."
+    },
+    {
+        "item_number": 173,
+        "question": "A nurse is assessing an infant with suspected intussusception. Which classic triad of signs should the nurse expect to identify?",
+        "options": [
+            "Colicky abdominal pain, vomiting, and currant jelly stools",
+            "Projectile vomiting, weight gain, and persistent diarrhea",
+            "High fever, right lower quadrant tenderness, and constipation",
+            "Epigastric pain, tarry black stools, and jaundice"
+        ],
+        "correct_answer": "Colicky abdominal pain, vomiting, and currant jelly stools",
+        "rationale": "The classic presentation of intussusception includes sudden episodic abdominal pain, vomiting, and stools containing blood and mucus (currant jelly)."
+    },
+    {
+        "item_number": 174,
+        "question": "A school-age child with Type 1 Diabetes Mellitus is admitted in diabetic ketoacidosis. Which of the following breathing patterns is characteristic of DKA?",
+        "options": [
+            "Kussmaul respirations (deep and rapid breathing)",
+            "Cheyne-Stokes respirations with periodic apnea",
+            "Shallow, rapid respirations with intercostal retractions",
+            "Prolonged expiratory wheezing with tachypnea"
+        ],
+        "correct_answer": "Kussmaul respirations (deep and rapid breathing)",
+        "rationale": "Kussmaul respirations are deep, rapid, labored breathing patterns that act as a respiratory compensatory mechanism to blow off carbon dioxide and reduce metabolic acidosis in DKA."
+    },
+    {
+        "item_number": 175,
+        "question": "A nurse is caring for an infant diagnosed with respiratory distress syndrome. Which of the following therapeutic interventions is standard?",
+        "options": [
+            "Administration of exogenous surfactant via endotracheal tube",
+            "Oral administration of broad-spectrum systemic antifungal drugs",
+            "Subcutaneous injection of long-acting insulin suspension",
+            "Intramuscular administration of iron dextran solution"
+        ],
+        "correct_answer": "Administration of exogenous surfactant via endotracheal tube",
+        "rationale": "Surfactant deficiency is the underlying cause of RDS in preterm infants; instilling exogenous surfactant endotracheally improves lung compliance and alveolar stability."
+    },
+    {
+        "item_number": 176,
+        "question": "A nurse is assessing a newborn 1 hour after birth. Which finding should be reported immediately to the physician?",
+        "options": [
+            "Central cyanosis and generalized sternal retractions",
+            "Transient acrocyanosis of the hands and feet",
+            "Passing dark green meconium stool within 12 hours",
+            "A soft caput succedaneum crossing suture lines"
+        ],
+        "correct_answer": "Central cyanosis and generalized sternal retractions",
+        "rationale": "Central cyanosis, nasal flaring, and sternal retractions indicate significant respiratory distress or congenital heart disease requiring immediate resuscitation."
+    },
+    {
+        "item_number": 177,
+        "question": "A 6-year-old child is scheduled for a tonsillectomy. Which postoperative instruction should the nurse provide to the parents?",
+        "options": [
+            "Avoid red-colored liquids, citrus juices, and sharp foods",
+            "Encourage the child to cough and clear the throat vigorously",
+            "Administer hot liquids and spicy soups to soothe the throat",
+            "Allow the child to drink using a straw to prevent spills"
+        ],
+        "correct_answer": "Avoid red-colored liquids, citrus juices, and sharp foods",
+        "rationale": "Red liquids can mimic blood if vomiting occurs, citrus juices irritate raw surgical sites, and sharp foods can damage the mucosal bed; straws are avoided to prevent suction trauma."
+    },
+    {
+        "item_number": 178,
+        "question": "A nurse is teaching the parents of an infant with developmental dysplasia of the hip treated with a Pavlik harness. Which statement is correct?",
+        "options": [
+            "Keep the harness on continuously as prescribed and check skin daily",
+            "Remove the harness for 3 hours daily to bathe the infant in a tub",
+            "Apply baby lotion under all straps to prevent chafing and redness",
+            "Adjust the harness chest and leg velcro straps weekly for growth"
+        ],
+        "correct_answer": "Keep the harness on continuously as prescribed and check skin daily",
+        "rationale": "The Pavlik harness must be maintained continuously to keep the hip reduced; parents check skin integrity daily without altering strap adjustments themselves."
+    },
+    {
+        "item_number": 179,
+        "question": "A nurse is assessing a child with acute asthma exacerbation. Which finding indicates a life-threatening airway obstruction (silent chest)?",
+        "options": [
+            "Absence of wheezing and diminished breath sounds",
+            "Loud bilateral inspiratory and expiratory wheezing",
+            "Mild tachypnea with clear breath sounds throughout",
+            "Productive cough with clear, thin mucus secretions"
+        ],
+        "correct_answer": "Absence of wheezing and diminished breath sounds",
+        "rationale": "A silent chest (lack of air movement or wheezing) during an acute asthma attack signifies extreme bronchoconstriction and impending respiratory arrest, requiring emergency intervention."
+    },
+    {
+        "item_number": 180,
+        "question": "A nurse is caring for an adolescent with idiopathic thrombocytopenic purpura. Which of the following laboratory parameters is characteristic?",
+        "options": [
+            "Significantly decreased platelet count with normal white and red blood cells",
+            "Marked leukocytosis with elevated immature blast cells",
+            "Prolonged partial thromboplastin time with normal platelet count",
+            "Severe polycythemia and elevated hemoglobin levels"
+        ],
+        "correct_answer": "Significantly decreased platelet count with normal white and red blood cells",
+        "rationale": "ITP is an immune-mediated disorder characterized by isolated thrombocytopenia (low platelets) while leukocyte and erythrocyte lineages remain normal."
+    },
+{
+        "item_number": 181,
+        "question": "A nurse is caring for an infant with a diagnosis of tetralogy of Fallot who suddenly develops a hypercyanotic spell (tet spell). Which of the following is the priority nursing action?",
+        "options": [
+            "Place the infant in a knee-chest position",
+            "Administer a fluid bolus of normal saline",
+            "Place the infant in the Trendelenburg position",
+            "Prepare the infant for immediate intubation"
+        ],
+        "correct_answer": "Place the infant in a knee-chest position",
+        "rationale": "Placing the infant in a knee-chest position increases systemic vascular resistance, which decreases right-to-left shunting across the ventricular septal defect and increases pulmonary blood flow."
+    },
+    {
+        "item_number": 182,
+        "question": "A 4-year-old child is brought to the emergency department with drooling, dysphagia, muffled voice, and high fever, appearing anxious and sitting in a tripod position. Which of the following is the most critical nursing priority?",
+        "options": [
+            "Keep the child calm and avoid disturbing the airway",
+            "Examine the oropharynx with a tongue depressor",
+            "Obtain a throat culture immediately",
+            "Administer oral clear liquids"
+        ],
+        "correct_answer": "Keep the child calm and avoid disturbing the airway",
+        "rationale": "These clinical signs indicate acute epiglottitis. Inspecting the throat or agitating the child can trigger sudden, fatal complete airway obstruction; the airway must not be manipulated without emergency equipment ready."
+    },
+    {
+        "item_number": 183,
+        "question": "An 8-month-old infant is admitted with severe dehydration secondary to acute gastroenteritis. Which of the following clinical findings is the most reliable indicator of moderate to severe dehydration in an infant?",
+        "options": [
+            "Tachycardia and sunken fontanel",
+            "Bounding peripheral pulses",
+            "Flushed skin and excessive tearing",
+            "Hypertension and periorbital edema"
+        ],
+        "correct_answer": "Tachycardia and sunken fontanel",
+        "rationale": "Tachycardia is often the earliest physiological sign of intravascular volume depletion, while a sunken anterior fontanel reflects decreased cerebrospinal fluid pressure and fluid deficit in infants."
+    },
+    {
+        "item_number": 184,
+        "question": "A school-age child is diagnosed with acute glomerulonephritis following a streptococcal infection. Which of the following lab findings is characteristic of this disorder?",
+        "options": [
+            "Elevated serum creatinine and hematuria",
+            "Decreased blood urea nitrogen and hypoglycemia",
+            "Thrombocytopenia and metabolic alkalosis",
+            "Elevated serum albumin and polyuria"
+        ],
+        "correct_answer": "Elevated serum creatinine and hematuria",
+        "rationale": "Acute post-streptococcal glomerulonephritis is characterized by glomerular inflammation leading to hematuria, proteinuria, and impaired renal function evidenced by elevated BUN and serum creatinine."
+    },
+    {
+        "item_number": 185,
+        "question": "A 2-year-old toddler is admitted with suspected iron deficiency anemia. Which laboratory result is most consistent with this diagnosis?",
+        "options": [
+            "Microcytic, hypochromic red blood cells",
+            "Macrocytic, hyperchromic red blood cells",
+            "Normocytic, normochromic red blood cells",
+            "Elevated total iron-binding capacity with high serum iron"
+        ],
+        "correct_answer": "Microcytic, hypochromic red blood cells",
+        "rationale": "Iron deficiency anemia in toddlers typically presents with low hemoglobin and hematocrit levels, characterized by microcytic (small) and hypochromic (pale) erythrocytes."
+    },
+    {
+        "item_number": 186,
+        "question": "A nurse is assessing a newborn and notes a unilateral absence of the Moro reflex, along with crepitus and limited movement of the right arm. Which of the following birth injuries should the nurse suspect?",
+        "options": [
+            "Clavicle fracture",
+            "Brachial plexus palsy (Erb's palsy)",
+            "Congenital hip dislocation",
+            "Spinal cord transection"
+        ],
+        "correct_answer": "Clavicle fracture",
+        "rationale": "A fractured clavicle is a common birth injury in shoulder dystocia or large infants, manifesting as localized pain, crepitus, and an asymmetric Moro reflex on the affected side."
+    },
+    {
+        "item_number": 187,
+        "question": "A 6-month-old infant is scheduled for an initial immunization series. According to standard pediatric schedules, which vaccines should the nurse administer?",
+        "options": [
+            "DTaP, Hib, IPV, PCV, HepB, and Rotavirus",
+            "MMR, Varicella, and Hepatitis A",
+            "Tdap booster and Meningococcal conjugate",
+            "HPV vaccine series"
+        ],
+        "correct_answer": "DTaP, Hib, IPV, PCV, HepB, and Rotavirus",
+        "rationale": "At 6 months of age, infants receive the third dose of DTaP, Hib, IPV, PCV, Hepatitis B, and Rotavirus vaccines according to CDC immunization guidelines."
+    },
+    {
+        "item_number": 188,
+        "question": "An infant with pyloric stenosis is admitted with persistent projectile vomiting. Which acid-base imbalance is the nurse most likely to detect on the laboratory report?",
+        "options": [
+            "Metabolic alkalosis",
+            "Metabolic acidosis",
+            "Respiratory alkalosis",
+            "Respiratory acidosis"
+        ],
+        "correct_answer": "Metabolic alkalosis",
+        "rationale": "Vomiting gastric contents containing hydrochloric acid results in the loss of hydrogen and chloride ions, leading to hypochloremic metabolic alkalosis."
+    },
+    {
+        "item_number": 189,
+        "question": "A 5-year-old child is diagnosed with acute lymphoblastic leukemia (ALL) and is receiving chemotherapy. Which of the following is the most crucial preventive nursing intervention?",
+        "options": [
+            "Strict hand hygiene and neutropenic precautions",
+            "High-protein and strict fluid restriction",
+            "Daily participation in high-impact contact sports",
+            "Avoiding all routine physical assessments"
+        ],
+        "correct_answer": "Strict hand hygiene and neutropenic precautions",
+        "rationale": "Chemotherapy induces bone marrow suppression, causing neutropenia. Protecting the immunosuppressed child from infection through strict hand hygiene and precautions is paramount."
+    },
+    {
+        "item_number": 190,
+        "question": "A nurse is educating the mother of a 3-year-old child diagnosed with cystic fibrosis about pancreatic enzyme replacement therapy. When should these enzymes be administered?",
+        "options": [
+            "Immediately before or with meals and snacks",
+            "One hour after finishing a meal",
+            "Only at bedtime on an empty stomach",
+            "Once daily in the morning"
+        ],
+        "correct_answer": "Immediately before or with meals and snacks",
+        "rationale": "Pancreatic enzymes must be taken with meals and snacks to ensure they are mixed properly with food to aid in the digestion and absorption of fats, proteins, and carbohydrates."
+    },
+    {
+        "item_number": 191,
+        "question": "A 3-week-old infant is brought to the clinic with a history of forceful, non-bilious projectile vomiting immediately after feeding. Which of the following physical examination findings is most characteristic of this condition?",
+        "options": [
+            "An olive-shaped mass in the epigastric region",
+            "Right lower quadrant tenderness and guarding",
+            "A scaphoid abdomen with absent bowel sounds",
+            "A palpable lower liver edge and splenomegaly"
+        ],
+        "correct_answer": "An olive-shaped mass in the epigastric region",
+        "rationale": "Hypertrophic pyloric stenosis classically presents with projectile vomiting and a palpable, firm, movable, olive-shaped mass in the right upper quadrant or epigastrium."
+    },
+    {
+        "item_number": 192,
+        "question": "A nurse is assessing a toddler with intussusception. Which classic triad of symptoms should the nurse expect to find?",
+        "options": [
+            "Abdominal pain, currant jelly stools, and a sausage-shaped mass",
+            "Projectile vomiting, weight gain, and persistent diarrhea",
+            "High fever, right lower quadrant pain, and constipation",
+            "Epigastric pain, tarry black stools, and jaundice"
+        ],
+        "correct_answer": "Abdominal pain, currant jelly stools, and a sausage-shaped mass",
+        "rationale": "Intussusception is characterized by sudden episodic abdominal pain, vomiting, a palpable sausage-shaped abdominal mass, and stools mixed with blood and mucus (currant jelly stools)."
+    },
+    {
+        "item_number": 193,
+        "question": "A 2-year-old child ingests a small quantity of furniture polish. What is the most appropriate immediate action for the nurse to advise?",
+        "options": [
+            "Bring the child to the emergency department immediately without inducing vomiting",
+            "Administer syrup of ipecac immediately at home",
+            "Give the child large amounts of vinegar to neutralize the chemical",
+            "Observe the child at home for 24 hours"
+        ],
+        "correct_answer": "Bring the child to the emergency department immediately without inducing vomiting",
+        "rationale": "Hydrocarbons (such as furniture polish) carry a high risk of aspiration pneumonia if regurgitated or induced to vomit; emesis is strictly contraindicated."
+    },
+    {
+        "item_number": 194,
+        "question": "A school-age child is diagnosed with Type 1 Diabetes Mellitus and is learning self-injection. Which site provides the most rapid and consistent subcutaneous insulin absorption?",
+        "options": [
+            "Abdomen",
+            "Thigh",
+            "Upper outer arm",
+            "Buttock"
+        ],
+        "correct_answer": "Abdomen",
+        "rationale": "Subcutaneous insulin absorption is fastest and most consistent when injected into the abdominal wall compared to other injection sites."
+    },
+    {
+        "item_number": 195,
+        "question": "A nurse is caring for an adolescent with newly diagnosed Graves' disease (hyperthyroidism). Which of the following clinical manifestations should the nurse expect?",
+        "options": [
+            "Weight loss, heat intolerance, and nervousness",
+            "Weight gain, cold intolerance, and sluggishness",
+            "Constipation, bradycardia, and dry skin",
+            "Edema, lethargy, and decreased appetite"
+        ],
+        "correct_answer": "Weight loss, heat intolerance, and nervousness",
+        "rationale": "Hyperthyroidism accelerates basal metabolism, leading to weight loss despite increased appetite, heat intolerance, tachycardia, anxiety, and nervousness."
+    },
+    {
+        "item_number": 196,
+        "question": "An infant is diagnosed with Hirschsprung disease (congenital aganglionic megacolon). Which clinical manifestation is typically observed during the neonatal period?",
+        "options": [
+            "Failure to pass meconium within the first 24 to 48 hours",
+            "Frequent projectile vomiting after every feed",
+            "Passage of large amounts of fatty, foul-smelling stools",
+            "Early onset of painless bright red rectal bleeding"
+        ],
+        "correct_answer": "Failure to pass meconium within the first 24 to 48 hours",
+        "rationale": "The hallmark sign of Hirschsprung disease in newborns is the failure to pass meconium within the first 24 to 48 hours of life, accompanied by abdominal distension."
+    },
+    {
+        "item_number": 197,
+        "question": "A nurse is caring for a 4-year-old child admitted with acute asthma exacerbation. Which assessment finding indicates worsening respiratory status and impending respiratory failure?",
+        "options": [
+            "Diminished breath sounds and silent chest",
+            "Loud bilateral expiratory wheezing",
+            "Increased coughing productive of thick mucus",
+            "Mild tachypnea and restlessness"
+        ],
+        "correct_answer": "Diminished breath sounds and silent chest",
+        "rationale": "A silent chest (absence of wheezing or breath sounds) in an acute asthma attack signifies severe bronchoconstriction and minimal air movement, representing an immediate life-threatening emergency."
+    },
+    {
+        "item_number": 198,
+        "question": "A school-age child is admitted with suspected acute appendicitis. Which of the following is a classic clinical sign associated with appendicitis?",
+        "options": [
+            "McBurney point tenderness",
+            "Cullen sign",
+            "Murphy sign",
+            "Turner sign"
+        ],
+        "correct_answer": "McBurney point tenderness",
+        "rationale": "Pain localized at McBurney's point (situated in the right lower quadrant between the umbilicus and the right anterior superior iliac spine) is a classic indicator of acute appendicitis."
+    },
+    {
+        "item_number": 199,
+        "question": "A nurse is teaching the parents of a toddler with newly diagnosed celiac disease. Which dietary restriction must be emphasized?",
+        "options": [
+            "Eliminating wheat, rye, barley, and oats",
+            "Avoiding all dairy and lactose products",
+            "Restricting citrus fruits and vegetables",
+            "Eliminating pureed meat and poultry"
+        ],
+        "correct_answer": "Eliminating wheat, rye, barley, and oats",
+        "rationale": "Celiac disease requires a lifelong gluten-free diet, which involves eliminating grains containing gluten: wheat, rye, barley, and regular oats (unless certified pure)."
+    },
+    {
+        "item_number": 200,
+        "question": "A 9-year-old child with severe burns is admitted to the pediatric intensive care unit. Which physiological response is expected during the initial emergent phase of burn shock?",
+        "options": [
+            "Capillary leak resulting in hypovolemia and hyponatremia",
+            "Massive fluid retention and hypertension",
+            "Rapid hemodilution and hyperkalemia",
+            "Immediate renal failure with massive polyuria"
+        ],
+        "correct_answer": "Capillary leak resulting in hypovolemia and hyponatremia",
+        "rationale": "Severe burns trigger systemic capillary permeability, causing rapid shifting of intravascular fluid into interstitial spaces, leading to hypovolemic shock, hemoconcentration, and electrolyte imbalances."
+    },
+{
+        "item_number": 201,
+        "question": "A nurse is caring for an infant with a congenital heart defect. Which of the following conditions is classified as a cyanotic heart defect with decreased pulmonary blood flow?",
+        "options": [
+            "Tetralogy of Fallot",
+            "Ventricular septal defect",
+            "Patent ductus arteriosus",
+            "Coarctation of the aorta"
+        ],
+        "correct_answer": "Tetralogy of Fallot",
+        "rationale": "Tetralogy of Fallot is the classic cyanotic congenital heart defect characterized by right ventricular outflow obstruction, leading to decreased pulmonary blood flow and right-to-left shunting."
+    },
+    {
+        "item_number": 202,
+        "question": "A 2-year-old child is admitted to the pediatric ward with suspected intussusception. Which of the following diagnostic findings is characteristic of this condition during an abdominal ultrasound?",
+        "options": [
+            "Target or pseudokidney sign indicating bowel telescoping",
+            "Hypertrophied pyloric muscle measuring >4 mm in thickness",
+            "Pneumoperitoneum with free air under the diaphragm",
+            "Dilated loops of small bowel with stacked coin patterns"
+        ],
+        "correct_answer": "Target or pseudokidney sign indicating bowel telescoping",
+        "rationale": "Abdominal ultrasonography for intussusception classically reveals a target sign or pseudokidney sign, representing layers of bowel telescoped into one another."
+    },
+    {
+        "item_number": 203,
+        "question": "A nurse is teaching the parents of an infant diagnosed with congenital hypothyroidism about hormone replacement therapy. Which of the following medications should the nurse discuss?",
+        "options": [
+            "Sodium levothyroxine",
+            "Regular insulin infusion",
+            "Desmopressin acetate",
+            "Propylthiouracil tablets"
+        ],
+        "correct_answer": "Sodium levothyroxine",
+        "rationale": "Congenital hypothyroidism is managed with lifelong daily oral sodium levothyroxine supplementation to ensure normal neurological development and physical growth."
+    },
+    {
+        "item_number": 204,
+        "question": "A school-age child is admitted with acute post-streptococcal glomerulonephritis. Which of the following findings should the nurse expect during the health history assessment?",
+        "options": [
+            "A sore throat or skin infection approximately 2 weeks prior",
+            "A history of severe peanut anaphylaxis in early infancy",
+            "Frequent episodes of high fever and productive cough for months",
+            "Recurrent urinary tract infections caused by E. coli"
+        ],
+        "correct_answer": "A sore throat or skin infection approximately 2 weeks prior",
+        "rationale": "APSGN typically develops as an immune-mediated consequence 10 to 21 days following a group A beta-hemolytic streptococcal pharyngitis or impetigo skin infection."
+    },
+    {
+        "item_number": 205,
+        "question": "A nurse is caring for an adolescent with cystic fibrosis who is experiencing a pulmonary exacerbation. Which of the following respiratory treatments should be prioritized?",
+        "options": [
+            "Airway clearance techniques and intravenous antibiotics",
+            "Continuous positive airway pressure with high fractional inspired oxygen",
+            "Emergency endotracheal intubation and mechanical ventilation",
+            "Prophylactic subcutaneous administration of long-acting bronchodilators"
+        ],
+        "correct_answer": "Airway clearance techniques and intravenous antibiotics",
+        "rationale": "Pulmonary exacerbations in cystic fibrosis are managed aggressively with specialized airway clearance therapy and targeted intravenous antibiotics to treat bacterial colonization."
+    },
+    {
+        "item_number": 206,
+        "question": "An infant is diagnosed with Hirschsprung disease. Which of the following pathophysiological mechanisms is responsible for this condition?",
+        "options": [
+            "Absence of parasympathetic ganglion cells in the distal colon",
+            "Hypertrophy of the pyloric sphincter muscle causing outlet obstruction",
+            "Failure of the neural tube to close during embryonic development",
+            "Inadequate surfactant production leading to alveolar collapse"
+        ],
+        "correct_answer": "Absence of parasympathetic ganglion cells in the distal colon",
+        "rationale": "Hirschsprung disease is characterized by congenital absence of ganglion cells (aganglionosis) in the myenteric and submucosal plexuses, resulting in lack of peristalsis and functional obstruction."
+    },
+    {
+        "item_number": 207,
+        "question": "A nurse is assessing a newborn delivered 3 hours ago. Which of the following findings indicates normal transitional physiology?",
+        "options": [
+            "A heart rate of 140 beats per minute and acrocyanosis",
+            "Persistent central cyanosis and severe intercostal retractions",
+            "A high-pitched shrill cry with a tense bulging fontanel",
+            "Absence of bowel sounds and generalized abdominal rigidity"
+        ],
+        "correct_answer": "A heart rate of 140 beats per minute and acrocyanosis",
+        "rationale": "A heart rate ranging from 120-160 beats per minute and mild acrocyanosis (bluish hands and feet) are expected normal transitional findings in a healthy newborn during the first hours of life."
+    },
+    {
+        "item_number": 208,
+        "question": "A 3-year-old child is brought to the emergency department after swallowing a coin. Which of the following diagnostic procedures should the nurse anticipate?",
+        "options": [
+            "Chest and neck radiography to locate the foreign body",
+            "Immediate diagnostic lumbar puncture for CSF analysis",
+            "Upper gastrointestinal series with barium swallow",
+            "Magnetic resonance imaging of the abdomen and pelvis"
+        ],
+        "correct_answer": "Chest and neck radiography to locate the foreign body",
+        "rationale": "Radiography of the neck, chest, and abdomen is the standard initial imaging modality to locate radiopaque foreign bodies like coins in the pediatric airway or esophagus."
+    },
+    {
+        "item_number": 209,
+        "question": "A nurse is caring for a child diagnosed with nephrotic syndrome. Which of the following laboratory panels reflects the classic biochemical triad?",
+        "options": [
+            "Proteinuria, hypoalbuminemia, and hyperlipidemia",
+            "Hematuria, azotemia, and hypercalcemia",
+            "Hypoglycemia, metabolic acidosis, and ketonuria",
+            "Leukocytosis, thrombocytosis, and hyperkalemia"
+        ],
+        "correct_answer": "Proteinuria, hypoalbuminemia, and hyperlipidemia",
+        "rationale": "The hallmark biochemical findings of nephrotic syndrome consist of heavy urinary protein loss, low serum albumin (hypoalbuminemia), and elevated blood lipid levels (hyperlipidemia)."
+    },
+    {
+        "item_number": 210,
+        "question": "A nurse is teaching the parents of a child with sickle cell disease about preventing vaso-occlusive crises. Which of the following environmental and lifestyle factors should be avoided?",
+        "options": [
+            "Dehydration, cold exposure, and high altitudes",
+            "Balanced regular meals and moderate physical activity",
+            "Adequate indoor heating and cotton clothing",
+            "Routine scheduled childhood immunizations"
+        ],
+        "correct_answer": "Dehydration, cold exposure, and high altitudes",
+        "rationale": "Triggers that increase sickling and cause vaso-occlusive crises include dehydration, hypoxia (high altitude or respiratory illness), and cold environmental stress."
+    }
+};
+
+        let activeItems = [];
+        let currentIndex = 0;
+        let userAnswers = {};
+        let flaggedQuestions = new Set();
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let isReviewMode = false;
+
+        function startExam() {
+            const inputVal = document.getElementById('json-input').value.trim();
+            let sourceItems = defaultItemBank.test_items;
+
+            if (inputVal) {
+                try {
+                    const parsed = JSON.parse(inputVal);
+                    if (Array.isArray(parsed)) {
+                        sourceItems = parsed;
+                    } else if (parsed.test_items && Array.isArray(parsed.test_items)) {
+                        sourceItems = parsed.test_items;
+                    } else {
+                        throw new Error("Invalid format");
+                    }
+                } catch (e) {
+                    alert('Invalid JSON format provided. Using default master bank.');
+                }
+            }
+
+            const countSelect = document.getElementById('select-count').value;
+            let requestedCount = countSelect === 'all' ? sourceItems.length : parseInt(countSelect);
+
+            const normalizedBank = sourceItems.map((item, idx) => {
+                let optionsArr = [];
+                let correctIdx = 0;
+
+                if (Array.isArray(item.options)) {
+                    optionsArr = item.options;
+                    // Match correct option text or index
+                    if (typeof item.correct_answer === 'string') {
+                        const matchedIdx = optionsArr.findIndex(opt => opt.trim().toLowerCase() === item.correct_answer.trim().toLowerCase());
+                        correctIdx = matchedIdx !== -1 ? matchedIdx : 0;
+                    } else if (typeof item.correct === 'number') {
+                        correctIdx = item.correct;
+                    }
+                }
+
+                return {
+                    id: item.item_number || item.id || (idx + 1),
+                    domain: item.category || item.domain || "Pediatric Nursing",
+                    question: item.question,
+                    options: optionsArr,
+                    correct: correctIdx,
+                    rational: item.rationale || item.rational || "No rationale provided."
+                };
+            });
+
+            activeItems = [...normalizedBank].sort(() => 0.5 - Math.random()).slice(0, requestedCount);
+            if (activeItems.length === 0) activeItems = normalizedBank;
+
+            currentIndex = 0;
+            userAnswers = {};
+            flaggedQuestions.clear();
+            secondsElapsed = 0;
+            isReviewMode = false;
+
+            document.getElementById('view-setup').classList.add('hidden');
+            document.getElementById('view-results').classList.add('hidden');
+            document.getElementById('view-quiz').classList.remove('hidden');
+            document.getElementById('header-stats').classList.remove('hidden');
+
+            startTimer();
+            renderQuestion();
+            renderPalette();
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                const hrs = String(Math.floor(secondsElapsed / 3600)).padStart(2, '0');
+                const mins = String(Math.floor((secondsElapsed % 3600) / 60)).padStart(2, '0');
+                const secs = String(secondsElapsed % 60).padStart(2, '0');
+                document.getElementById('timer-display').textContent = `${hrs}:${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function renderQuestion() {
+            const item = activeItems[currentIndex];
+            document.getElementById('question-domain').textContent = `Category: ${item.domain || 'Pediatric Nursing'}`;
+            document.getElementById('question-number-label').textContent = `Question ${currentIndex + 1} of ${activeItems.length}`;
+            document.getElementById('question-id-badge').textContent = `Item #${item.id || currentIndex + 1}`;
+            document.getElementById('question-text').textContent = item.question;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            item.options.forEach((opt, idx) => {
+                const isSelected = userAnswers[currentIndex] === idx;
+                const isCorrectOpt = item.correct === idx;
+
+                let btnClass = "w-full text-left p-4 rounded-xl border text-sm transition flex items-start gap-3 ";
+                if (isReviewMode) {
+                    if (isCorrectOpt) {
+                        btnClass += "bg-emerald-900/40 border-emerald-600 text-emerald-200 font-medium";
+                    } else if (isSelected && !isCorrectOpt) {
+                        btnClass += "bg-rose-900/40 border-rose-600 text-rose-200";
+                    } else {
+                        btnClass += "bg-slate-900 border-slate-700 text-slate-300 opacity-70";
+                    }
+                } else {
+                    if (isSelected) {
+                        btnClass += "bg-teal-900/50 border-teal-600 text-white font-medium shadow-md";
+                    } else {
+                        btnClass += "bg-slate-900 hover:bg-slate-700/50 border-slate-700 text-slate-300";
+                    }
+                }
+
+                const letter = String.fromCharCode(65 + idx);
+                container.innerHTML += `
+                    <button onclick="selectOption(${idx})" ${isReviewMode ? 'disabled' : ''} class="${btnClass}">
+                        <span class="font-bold w-6 h-6 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700 text-xs text-teal-400">${letter}</span>
+                        <span class="leading-relaxed mt-0.5">${opt}</span>
+                    </button>
+                `;
+            });
+
+            const rationalBox = document.getElementById('rational-box');
+            if (isReviewMode || userAnswers[currentIndex] !== undefined) {
+                rationalBox.classList.remove('hidden');
+                document.getElementById('rational-text').textContent = item.rational;
+            } else {
+                rationalBox.classList.add('hidden');
+            }
+
+            const flagBtn = document.getElementById('btn-flag');
+            if (flaggedQuestions.has(currentIndex)) {
+                flagBtn.className = "bg-gold-500 text-slate-900 font-semibold px-4 py-2.5 rounded-xl text-sm transition shadow-md";
+                flagBtn.textContent = "Flagged";
+            } else {
+                flagBtn.className = "bg-slate-700 hover:bg-slate-600 text-gold-500 border border-slate-600 px-4 py-2.5 rounded-xl text-sm transition";
+                flagBtn.textContent = "Flag for Review";
+            }
+
+            document.getElementById('btn-prev').disabled = currentIndex === 0;
+            document.getElementById('progress-display').textContent = `${Object.keys(userAnswers).length}/${activeItems.length}`;
+            renderPalette();
+        }
+
+        function selectOption(idx) {
+            userAnswers[currentIndex] = idx;
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentIndex < activeItems.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        }
+
+        function toggleFlag() {
+            if (flaggedQuestions.has(currentIndex)) {
+                flaggedQuestions.delete(currentIndex);
+            } else {
+                flaggedQuestions.add(currentIndex);
+            }
+            renderQuestion();
+        }
+
+        function renderPalette() {
+            const grid = document.getElementById('palette-grid');
+            grid.innerHTML = '';
+            activeItems.forEach((_, idx) => {
+                let bg = "bg-slate-700 text-slate-300 border-slate-600";
+                if (userAnswers[idx] !== undefined) bg = "bg-teal-600 text-white border-teal-500 font-bold";
+                if (flaggedQuestions.has(idx)) bg = "bg-gold-500 text-slate-900 font-bold border-gold-600";
+                if (currentIndex === idx) bg += " ring-2 ring-white";
+
+                grid.innerHTML += `
+                    <button onclick="jumpToQuestion(${idx})" class="h-9 rounded-lg border text-xs font-mono transition ${bg}">
+                        ${idx + 1}
+                    </button>
+                `;
+            });
+        }
+
+        function jumpToQuestion(idx) {
+            currentIndex = idx;
+            renderQuestion();
+        }
+
+        function togglePalette() {
+            const sidebar = document.getElementById('palette-sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+
+        function confirmSubmitExam() {
+            const unanswered = activeItems.length - Object.keys(userAnswers).length;
+            if (unanswered > 0 && !isReviewMode) {
+                if (!confirm(`You have ${unanswered} unanswered questions. Are you sure you want to submit?`)) return;
+            }
+            submitExam();
+        }
+
+        function submitExam() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            let correctCount = 0;
+            activeItems.forEach((item, idx) => {
+                if (userAnswers[idx] === item.correct) correctCount++;
+            });
+
+            const score = Math.round((correctCount / activeItems.length) * 100);
+            const passed = score >= 70;
+
+            document.getElementById('res-score').textContent = `${score}%`;
+            const statusEl = document.getElementById('res-status');
+            statusEl.textContent = passed ? 'PASS' : 'FAIL';
+            statusEl.className = `text-2xl font-bold ${passed ? 'text-emerald-500' : 'text-rose-500'}`;
+
+            document.getElementById('res-total').textContent = activeItems.length;
+            document.getElementById('res-correct').textContent = correctCount;
+            document.getElementById('res-incorrect').textContent = activeItems.length - correctCount;
+            document.getElementById('res-time').textContent = document.getElementById('timer-display').textContent;
+
+            document.getElementById('view-quiz').classList.add('hidden');
+            document.getElementById('view-results').classList.remove('hidden');
+            document.getElementById('header-stats').classList.add('hidden');
+        }
+
+        function reviewExam() {
+            isReviewMode = true;
+            currentIndex = 0;
+            document.getElementById('view-results').classList.add('hidden');
+            document.getElementById('view-quiz').classList.remove('hidden');
+            document.getElementById('header-stats').classList.remove('hidden');
+            renderQuestion();
+            renderPalette();
+        }
+
+        function resetExam() {
+            document.getElementById('view-results').classList.add('hidden');
+            document.getElementById('view-setup').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
